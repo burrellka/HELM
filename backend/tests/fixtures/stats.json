@@ -1,0 +1,11 @@
+{
+    "input_tokens": 9,
+    "input_tokens_total": 17193,
+    "output_tokens": 1,
+    "output_tokens_total": 3359,
+    "prompt_tokens": 9,
+    "prompt_tokens_total": 17193,
+    "request_count_total": 18,
+    "time_to_first_token": 0.02541,
+    "tokens_per_second": 1000000.0
+}

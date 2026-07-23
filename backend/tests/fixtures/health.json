@@ -1,0 +1,96 @@
+{
+    "all_models_loaded": [
+        {
+            "backend_alive": true,
+            "backend_health": "ready",
+            "backend_url": "http://127.0.0.1:8001/v1",
+            "checkpoint": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",
+            "device": "gpu",
+            "last_use": 289649785,
+            "loaded": true,
+            "max_context_window": 262144,
+            "model_name": "Gemma-4-26B-A4B-it-MTP-GGUF",
+            "pid": 1771790,
+            "pinned": true,
+            "recipe": "llamacpp",
+            "recipe_options": {
+                "ctx_size": 524288,
+                "llamacpp_args": "--parallel 8 --temp 1.0 --top-k 64 --top-p 0.95",
+                "llamacpp_backend": "rocm",
+                "pinned": true
+            },
+            "status": "ready",
+            "type": "llm",
+            "watchdog_reset": false
+        },
+        {
+            "backend_alive": true,
+            "backend_health": "ready",
+            "backend_url": "http://127.0.0.1:8002/v1",
+            "checkpoint": "NousResearch/Hermes-3-Llama-3.1-8B-GGUF:Q4_K_M",
+            "device": "gpu",
+            "last_use": 288285642,
+            "loaded": true,
+            "max_context_window": 131072,
+            "model_name": "Hermes-3-Llama-3.1-8B-GGUF-Q4_K_M",
+            "pid": 1835479,
+            "pinned": true,
+            "recipe": "llamacpp",
+            "recipe_options": {
+                "ctx_size": 131072,
+                "llamacpp_args": "--parallel 2",
+                "llamacpp_backend": "rocm",
+                "pinned": true
+            },
+            "status": "ready",
+            "type": "llm",
+            "watchdog_reset": false
+        },
+        {
+            "backend_alive": true,
+            "backend_health": "ready",
+            "backend_url": "http://127.0.0.1:8003/v1",
+            "checkpoint": "/opt/models/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",
+            "device": "gpu",
+            "last_use": 375540865,
+            "loaded": true,
+            "max_context_window": 40960,
+            "model_name": "Aevum-0.6B-Finetuned.Q4_K_M",
+            "pid": 2646920,
+            "pinned": false,
+            "recipe": "llamacpp",
+            "recipe_options": {
+                "ctx_size": 40960,
+                "llamacpp_args": "--temp 0.6 --top-p 0.85 --top-k 20 --min-p 0.0 --repeat-penalty 1.0",
+                "llamacpp_backend": "rocm"
+            },
+            "status": "ready",
+            "type": "llm",
+            "watchdog_reset": false
+        }
+    ],
+    "max_models": {
+        "embedding": 10,
+        "image": 10,
+        "llm": 10,
+        "reranking": 10,
+        "transcription": 10,
+        "tts": 10
+    },
+    "model_loaded": "Aevum-0.6B-Finetuned.Q4_K_M",
+    "pinned_models": {
+        "embedding": 0,
+        "image": 0,
+        "llm": 2,
+        "reranking": 0,
+        "transcription": 0,
+        "tts": 0
+    },
+    "status": "ok",
+    "telemetry": {
+        "enabled": false
+    },
+    "update_check_done": true,
+    "version": "10.10.0",
+    "websocket_port": 9000
+}

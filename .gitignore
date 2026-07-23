@@ -1,0 +1,36 @@
+# Secrets. The whole point.
+.env
+*.env
+!.env.example
+
+# HELM state — operator metadata, JWT secret, password hash.
+.data/
+*.db
+*.db-wal
+*.db-shm
+jwt_secret
+auth.json
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+node_modules/
+dist/
+*.local
+
+.DS_Store
+.idea/
+.vscode/
+
+# Vite/tsc build artifact
+tsconfig.tsbuildinfo
+
+# Internal working notes — the dev's running log and the status write-ups for
+# the architect. Kept local, not published: they carry deployment specifics and
+# candid in-progress notes that aren't meant for the public repo.
+DEV_NOTES.md
+STATUS_FOR_ARCHITECT.md

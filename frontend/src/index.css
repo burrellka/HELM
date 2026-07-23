@@ -1,0 +1,199 @@
+/* HELM design tokens.
+ *
+ * Same token NAMES as URSA-OSCAR / APEX so components port between the apps
+ * without a find-and-replace. Inter, per spec §2 ("consistent with the
+ * existing homelab app family").
+ *
+ * The palette is the house light theme. HELM adds one family the others
+ * don't need: device accents (GPU/NPU/CPU), because "which engine is this
+ * running on" is the question the dashboard exists to answer at a glance.
+ *
+ * Use the tokens. Do not hardcode hex in components — that's how the family
+ * drifted apart the last time.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Surfaces */
+  --bg-primary: #f7f8fa;       /* page */
+  --bg-secondary: #ffffff;     /* cards, sidebar */
+  --bg-elevated: #ffffff;      /* modals, popovers */
+  --bg-hover: #f0f2f6;         /* row + nav hover */
+  --bg-subtle: #f5f6f9;        /* table headers, inputs */
+
+  /* Text */
+  --text-primary: #1a1d23;
+  --text-secondary: #6b7280;
+  --text-muted: #9aa0a6;
+
+  /* Accent */
+  --accent-primary: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eef2ff;
+  --accent-text: #1e40af;
+
+  /* Lines */
+  --border-color: #e3e6eb;
+  --border-strong: #cdd1d8;
+  --border: #e3e6eb;           /* alias for ported components */
+
+  /* Status */
+  --status-good: #16a34a;
+  --status-good-soft: #dcfce7;
+  --status-warn: #d97706;
+  --status-warn-soft: #fef3c7;
+  --status-bad: #dc2626;
+  --status-bad-soft: #fee2e2;
+  --status-neutral: #6b7280;
+  --status-neutral-soft: #f1f3f5;
+
+  /* HELM-specific: device accents.
+   * One colour per engine so the operator reads the fleet by shape, not by
+   * squinting at a text column. */
+  --device-gpu: #7c3aed;       /* iGPU / ROCm */
+  --device-gpu-soft: #f3e8ff;
+  --device-npu: #0891b2;       /* NPU / FastFlowLM */
+  --device-npu-soft: #cffafe;
+  --device-cpu: #6b7280;
+  --device-cpu-soft: #f1f3f5;
+
+  /* HELM-specific: "we genuinely don't know".
+   * Spec rule 3 (npu_percent is always null) and review F9 (an unmatched
+   * labels join) both need a visual that is NOT zero and NOT an error.
+   * Give unknown its own look so it can never be mistaken for a real value. */
+  --unknown-fg: #9aa0a6;
+  --unknown-bg: repeating-linear-gradient(
+    45deg, #f1f3f5, #f1f3f5 6px, #e9ecef 6px, #e9ecef 12px
+  );
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 2px 8px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.12);
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* For PIDs, ports, ctx numbers, raw args — anything the operator will
+   * compare column-wise or paste into a terminal. */
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Numbers that get compared down a column must not jitter. */
+.tabular { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-mono); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 6px;
+  border: 2px solid var(--bg-primary);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── Primitives ──────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  padding: 1rem;
+}
+
+.btn-primary, .btn-secondary {
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 0.875rem;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.btn-primary { background: var(--accent-primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--bg-hover); }
+.btn-primary:disabled, .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Destructive actions get their own look. HELM can unload the model six
+ * agents are using and delete 20GB of weights — those buttons must not look
+ * like "Refresh". */
+.btn-danger {
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 0.875rem;
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--bg-secondary);
+  color: var(--status-bad);
+  border: 1px solid var(--status-bad);
+}
+.btn-danger:hover:not(:disabled) { background: var(--status-bad-soft); }
+
+.field { display: flex; flex-direction: column; gap: 0.25rem; }
+.field label { font-size: 0.8125rem; font-weight: 500; color: var(--text-secondary); }
+.field input, .field select {
+  font-family: inherit;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.field input:focus, .field select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.stat-sub { font-size: 0.75rem; color: var(--text-muted); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.badge-gpu { background: var(--device-gpu-soft); color: var(--device-gpu); }
+.badge-npu { background: var(--device-npu-soft); color: var(--device-npu); }
+.badge-cpu { background: var(--device-cpu-soft); color: var(--device-cpu); }
+
+/* The honest-ignorance treatment. Spec rule 3 says render "unavailable",
+ * never 0%; review F9 says an unmatched labels join must read "unknown",
+ * never an empty badge row. Both use this — it can't be confused with data. */
+.unknown {
+  color: var(--unknown-fg);
+  font-style: italic;
+}
+
+/* The streaming-chat 'thinking' indicator: the 26B reasons for a beat before
+ * its first answer token, so this pulses to prove the stream is alive. */
+.thinking-dots {
+  animation: thinking-pulse 1.2s ease-in-out infinite;
+}
+@keyframes thinking-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 1; }
+}
+.unknown-bar { background: var(--unknown-bg); }

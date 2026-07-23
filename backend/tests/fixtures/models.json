@@ -1,0 +1,3707 @@
+{
+    "data": [
+        {
+            "checkpoint": "Serveurperso/ACE-Step-1.5-GGUF:acestep-v15-xl-sft-Q8_0.gguf",
+            "checkpoints": {
+                "main": "Serveurperso/ACE-Step-1.5-GGUF:acestep-v15-xl-sft-Q8_0.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "ACE-Step-Music",
+            "labels": [
+                "audio-generation"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "acestep",
+            "recipe_options": {},
+            "size": 10.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "/opt/models/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Aevum-0.6B-Finetuned.Q4_K_M",
+            "labels": [
+                "custom",
+                "tool-calling"
+            ],
+            "max_context_window": 40960,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.369,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "prism-ml/Bonsai-1.7B-gguf:Q1_0",
+            "checkpoints": {
+                "main": "prism-ml/Bonsai-1.7B-gguf:Q1_0"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Bonsai-1.7B-gguf",
+            "labels": [
+                "llamacpp"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.25,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "prism-ml/Bonsai-4B-gguf:Q1_0",
+            "checkpoints": {
+                "main": "prism-ml/Bonsai-4B-gguf:Q1_0"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Bonsai-4B-gguf",
+            "labels": [
+                "llamacpp"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.572,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "prism-ml/Bonsai-8B-gguf:Q1_0",
+            "checkpoints": {
+                "main": "prism-ml/Bonsai-8B-gguf:Q1_0"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Bonsai-8B-gguf",
+            "labels": [
+                "llamacpp"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 1.16,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/cogito-v2-preview-llama-109B-MoE-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "unsloth/cogito-v2-preview-llama-109B-MoE-GGUF:Q4_K_M",
+                "mmproj": "unsloth/cogito-v2-preview-llama-109B-MoE-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Cogito-v2-llama-109B-MoE-GGUF",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 65.4,
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q4_1",
+            "checkpoints": {
+                "main": "unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q4_1"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "DeepSeek-Qwen3-8B-GGUF",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 5.25,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "mistralai/Devstral-Small-2507_gguf:Q4_K_M",
+            "checkpoints": {
+                "main": "mistralai/Devstral-Small-2507_gguf:Q4_K_M"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Devstral-Small-2507-GGUF",
+            "labels": [
+                "coding",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 14.3,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "black-forest-labs/FLUX.2-klein-4B:flux-2-klein-4b.safetensors",
+            "checkpoints": {
+                "main": "black-forest-labs/FLUX.2-klein-4B:flux-2-klein-4b.safetensors",
+                "text_encoder": "Comfy-Org/vae-text-encorder-for-flux-klein-4b:split_files/text_encoders/qwen_3_4b.safetensors",
+                "vae": "Comfy-Org/vae-text-encorder-for-flux-klein-4b:split_files/vae/flux2-vae.safetensors"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Flux-2-Klein-4B",
+            "image_defaults": {
+                "cfg_scale": 1.0,
+                "height": 1024,
+                "steps": 4,
+                "width": 1024
+            },
+            "labels": [
+                "image",
+                "edit"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {
+                "cfg_scale": 1.0,
+                "height": 1024,
+                "steps": 4,
+                "width": 1024
+            },
+            "size": 16.1,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/FLUX.2-klein-9B-GGUF:flux-2-klein-9b-Q8_0.gguf",
+            "checkpoints": {
+                "main": "unsloth/FLUX.2-klein-9B-GGUF:flux-2-klein-9b-Q8_0.gguf",
+                "text_encoder": "unsloth/Qwen3-8B-GGUF:Qwen3-8B-Q8_0.gguf",
+                "vae": "Comfy-Org/vae-text-encorder-for-flux-klein-9b:split_files/vae/flux2-vae.safetensors"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Flux-2-Klein-9B-GGUF",
+            "image_defaults": {
+                "cfg_scale": 1.0,
+                "height": 256,
+                "steps": 4,
+                "width": 256
+            },
+            "labels": [
+                "image",
+                "edit"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {
+                "cfg_scale": 1.0,
+                "height": 256,
+                "steps": 4,
+                "width": 256
+            },
+            "size": 19.0,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/GLM-4.5-Air-GGUF:UD-Q4_K_XL",
+            "checkpoints": {
+                "main": "unsloth/GLM-4.5-Air-GGUF:UD-Q4_K_XL"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "GLM-4.5-Air-UD-Q4K-XL-GGUF",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 67.7,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "zai-org/GLM-4.7-Flash",
+            "checkpoints": {
+                "main": "zai-org/GLM-4.7-Flash"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "GLM-4.7-Flash-FP16-vLLM",
+            "labels": [
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "vllm",
+            "recipe_options": {},
+            "size": 62.47,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/GLM-4.7-Flash-GGUF:GLM-4.7-Flash-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/GLM-4.7-Flash-GGUF:GLM-4.7-Flash-UD-Q4_K_XL.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "GLM-4.7-Flash-GGUF",
+            "labels": [
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 17.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggml-org/gemma-3-4b-it-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "ggml-org/gemma-3-4b-it-GGUF:Q4_K_M",
+                "mmproj": "ggml-org/gemma-3-4b-it-GGUF:mmproj-model-f16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Gemma-3-4b-it-GGUF",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 3.34,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gemma-4-12b-it-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "unsloth/gemma-4-12b-it-GGUF:Q4_K_M",
+                "mmproj": "unsloth/gemma-4-12b-it-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Gemma-4-12B-it-GGUF",
+            "labels": [
+                "tool-calling",
+                "vision",
+                "llamacpp"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 7.29,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gemma-4-12b-it-GGUF:Q4_K_M",
+            "checkpoints": {
+                "draft": "unsloth/gemma-4-12b-it-GGUF:mtp-gemma-4-12b-it.gguf",
+                "main": "unsloth/gemma-4-12b-it-GGUF:Q4_K_M",
+                "mmproj": "unsloth/gemma-4-12b-it-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Gemma-4-12B-it-MTP-GGUF",
+            "labels": [
+                "tool-calling",
+                "llamacpp",
+                "vision",
+                "mtp"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 7.75,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",
+            "checkpoints": {
+                "main": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",
+                "mmproj": "unsloth/gemma-4-26B-A4B-it-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Gemma-4-26B-A4B-it-GGUF",
+            "labels": [
+                "hot",
+                "tool-calling",
+                "vision",
+                "llamacpp"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 16.9,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",
+            "checkpoints": {
+                "draft": "unsloth/gemma-4-26B-A4B-it-GGUF:mtp-gemma-4-26B-A4B-it.gguf",
+                "main": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",
+                "mmproj": "unsloth/gemma-4-26B-A4B-it-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Gemma-4-26B-A4B-it-MTP-GGUF",
+            "labels": [
+                "hot",
+                "tool-calling",
+                "vision",
+                "llamacpp",
+                "mtp"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {
+                "ctx_size": 524288,
+                "llamacpp_args": "--parallel 8",
+                "pinned": true
+            },
+            "size": 17.3,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gemma-4-31B-it-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "unsloth/gemma-4-31B-it-GGUF:Q4_K_M",
+                "mmproj": "unsloth/gemma-4-31B-it-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Gemma-4-31B-it-GGUF",
+            "labels": [
+                "hot",
+                "tool-calling",
+                "vision",
+                "llamacpp"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 19.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gemma-4-31B-it-GGUF:Q4_K_M",
+            "checkpoints": {
+                "draft": "unsloth/gemma-4-31B-it-GGUF:mtp-gemma-4-31B-it.gguf",
+                "main": "unsloth/gemma-4-31B-it-GGUF:Q4_K_M",
+                "mmproj": "unsloth/gemma-4-31B-it-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Gemma-4-31B-it-MTP-GGUF",
+            "labels": [
+                "hot",
+                "tool-calling",
+                "vision",
+                "llamacpp",
+                "mtp"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 20.0,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gemma-4-E2B-it-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "unsloth/gemma-4-E2B-it-GGUF:Q4_K_M",
+                "mmproj": "unsloth/gemma-4-E2B-it-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Gemma-4-E2B-it-GGUF",
+            "labels": [
+                "tool-calling",
+                "vision",
+                "llamacpp"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 4.09,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gemma-4-E4B-it-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "unsloth/gemma-4-E4B-it-GGUF:Q4_K_M",
+                "mmproj": "unsloth/gemma-4-E4B-it-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Gemma-4-E4B-it-GGUF",
+            "labels": [
+                "tool-calling",
+                "vision",
+                "llamacpp"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 5.97,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "NousResearch/Hermes-3-Llama-3.1-8B-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "NousResearch/Hermes-3-Llama-3.1-8B-GGUF:Q4_K_M"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Hermes-3-Llama-3.1-8B-GGUF-Q4_K_M",
+            "labels": [
+                "custom"
+            ],
+            "max_context_window": 131072,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {
+                "ctx_size": 131072,
+                "llamacpp_args": "--parallel 2",
+                "pinned": true
+            },
+            "size": 4.58,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/Hermes-3-Llama-3.2-3B-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "/opt/models/models/Hermes-3-Llama-3.2-3B-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Hermes-3-Llama-3.2-3B-Q4_K_M",
+            "labels": [
+                "custom"
+            ],
+            "max_context_window": 131072,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 1.88,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Menlo/Jan-nano-128k-gguf:jan-nano-128k-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "Menlo/Jan-nano-128k-gguf:jan-nano-128k-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Jan-nano-128k-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 2.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "janhq/Jan-v1-4B-GGUF:Jan-v1-4B-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "janhq/Jan-v1-4B-GGUF:Jan-v1-4B-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Jan-v1-4B-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 2.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "LiquidAI/LFM2-1.2B-GGUF:LFM2-1.2B-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "LiquidAI/LFM2-1.2B-GGUF:LFM2-1.2B-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "LFM2-1.2B-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.731,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "LiquidAI/LFM2-24B-A2B-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "LiquidAI/LFM2-24B-A2B-GGUF:Q4_K_M"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "LFM2-24B-A2B-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 14.4,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "LiquidAI/LFM2-8B-A1B-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "LiquidAI/LFM2-8B-A1B-GGUF:Q4_K_M"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "LFM2-8B-A1B-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 5.04,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "LFM2.5-1.2B-Instruct-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.731,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "LiquidAI/LFM2.5-8B-A1B-GGUF:LFM2.5-8B-A1B-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "LiquidAI/LFM2.5-8B-A1B-GGUF:LFM2.5-8B-A1B-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "LFM2.5-8B-A1B",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 5.16,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "lemonade-sdk/LMX-Omni-5.5B-Lite",
+            "checkpoints": {
+                "main": "lemonade-sdk/LMX-Omni-5.5B-Lite"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "LMX-Omni-5.5B-Lite",
+            "labels": [],
+            "models": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "collection.omni",
+            "recipe_options": {},
+            "size": 9.3,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "lemonade-sdk/LMX-Omni-52B-Halo",
+            "checkpoints": {
+                "main": "lemonade-sdk/LMX-Omni-52B-Halo"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "LMX-Omni-52B-Halo",
+            "labels": [],
+            "models": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "collection.omni",
+            "recipe_options": {},
+            "size": 44.77,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "",
+            "checkpoints": {
+                "main": ""
+            },
+            "components": [
+                "Qwen3.5-4B-GGUF",
+                "SD-Turbo",
+                "Whisper-Tiny",
+                "kokoro-v1"
+            ],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Lite Collection",
+            "labels": [],
+            "models": [
+                {
+                    "checkpoint": "unsloth/Qwen3.5-4B-GGUF:Qwen3.5-4B-UD-Q4_K_XL.gguf",
+                    "checkpoints": {
+                        "main": "unsloth/Qwen3.5-4B-GGUF:Qwen3.5-4B-UD-Q4_K_XL.gguf",
+                        "mmproj": "unsloth/Qwen3.5-4B-GGUF:mmproj-F16.gguf"
+                    },
+                    "components": [],
+                    "created": 1234567890,
+                    "downloaded": false,
+                    "id": "Qwen3.5-4B-GGUF",
+                    "labels": [
+                        "vision",
+                        "tool-calling",
+                        "hot"
+                    ],
+                    "object": "model",
+                    "owned_by": "lemonade",
+                    "recipe": "llamacpp",
+                    "recipe_options": {},
+                    "size": 3.58,
+                    "suggested": true,
+                    "update_available": false
+                },
+                {
+                    "checkpoint": "stabilityai/sd-turbo:sd_turbo.safetensors",
+                    "checkpoints": {
+                        "main": "stabilityai/sd-turbo:sd_turbo.safetensors"
+                    },
+                    "components": [],
+                    "created": 1234567890,
+                    "downloaded": false,
+                    "id": "SD-Turbo",
+                    "image_defaults": {
+                        "cfg_scale": 1.0,
+                        "height": 512,
+                        "steps": 4,
+                        "width": 512
+                    },
+                    "labels": [
+                        "image"
+                    ],
+                    "object": "model",
+                    "owned_by": "lemonade",
+                    "recipe": "sd-cpp",
+                    "recipe_options": {
+                        "cfg_scale": 1.0,
+                        "height": 512,
+                        "steps": 4,
+                        "width": 512
+                    },
+                    "size": 5.21,
+                    "suggested": true,
+                    "update_available": false
+                },
+                {
+                    "checkpoint": "ggerganov/whisper.cpp:ggml-tiny.bin",
+                    "checkpoints": {
+                        "main": "ggerganov/whisper.cpp:ggml-tiny.bin",
+                        "npu_cache": "amd/whisper-tiny-onnx-npu:ggml-tiny-encoder-vitisai.rai"
+                    },
+                    "components": [],
+                    "created": 1234567890,
+                    "downloaded": false,
+                    "id": "Whisper-Tiny",
+                    "labels": [
+                        "transcription",
+                        "realtime-transcription"
+                    ],
+                    "object": "model",
+                    "owned_by": "lemonade",
+                    "recipe": "whispercpp",
+                    "recipe_options": {},
+                    "size": 0.075,
+                    "suggested": true,
+                    "update_available": false
+                },
+                {
+                    "checkpoint": "mikkoph/kokoro-onnx",
+                    "checkpoints": {
+                        "main": "mikkoph/kokoro-onnx"
+                    },
+                    "components": [],
+                    "created": 1234567890,
+                    "downloaded": false,
+                    "id": "kokoro-v1",
+                    "labels": [
+                        "tts"
+                    ],
+                    "object": "model",
+                    "owned_by": "lemonade",
+                    "recipe": "kokoro",
+                    "recipe_options": {},
+                    "size": 0.354,
+                    "suggested": true,
+                    "update_available": false
+                }
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "collection.omni",
+            "recipe_options": {},
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Llama-3.2-1B-Instruct-GGUF:Llama-3.2-1B-Instruct-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Llama-3.2-1B-Instruct-GGUF:Llama-3.2-1B-Instruct-UD-Q4_K_XL.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Llama-3.2-1B-Instruct-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.834,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Llama-3.2-3B-Instruct-GGUF:Llama-3.2-3B-Instruct-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Llama-3.2-3B-Instruct-GGUF:Llama-3.2-3B-Instruct-UD-Q4_K_XL.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Llama-3.2-3B-Instruct-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 2.06,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Llama-4-Scout-17B-16E-Instruct-GGUF:Q4_K_S",
+            "checkpoints": {
+                "main": "unsloth/Llama-4-Scout-17B-16E-Instruct-GGUF:Q4_K_S",
+                "mmproj": "unsloth/Llama-4-Scout-17B-16E-Instruct-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Llama-4-Scout-17B-16E-Instruct-GGUF",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 63.2,
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "mistralai/Ministral-3-3B-Instruct-2512-GGUF:Ministral-3-3B-Instruct-2512-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "mistralai/Ministral-3-3B-Instruct-2512-GGUF:Ministral-3-3B-Instruct-2512-Q4_K_M.gguf",
+                "mmproj": "mistralai/Ministral-3-3B-Instruct-2512-GGUF:Ministral-3-3B-Instruct-2512-BF16-mmproj.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Ministral-3-3B-Instruct-2512-GGUF",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 2.99,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "UsefulSensors/moonshine-streaming:onnx/medium",
+            "checkpoints": {
+                "main": "UsefulSensors/moonshine-streaming:onnx/medium"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Moonshine-Medium-Streaming",
+            "labels": [
+                "transcription",
+                "realtime-transcription",
+                "hot"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "moonshine",
+            "recipe_options": {},
+            "size": 1.08,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "UsefulSensors/moonshine-streaming:onnx/small",
+            "checkpoints": {
+                "main": "UsefulSensors/moonshine-streaming:onnx/small"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Moonshine-Small-Streaming",
+            "labels": [
+                "transcription",
+                "realtime-transcription"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "moonshine",
+            "recipe_options": {},
+            "size": 0.431,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "UsefulSensors/moonshine-streaming:onnx/tiny",
+            "checkpoints": {
+                "main": "UsefulSensors/moonshine-streaming:onnx/tiny"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Moonshine-Tiny-Streaming",
+            "labels": [
+                "transcription",
+                "realtime-transcription"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "moonshine",
+            "recipe_options": {},
+            "size": 0.202,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Nemotron-3-Nano-30B-A3B-GGUF:Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Nemotron-3-Nano-30B-A3B-GGUF:Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Nemotron-3-Nano-30B-A3B-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 22.8,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Phi-4-mini-instruct-GGUF:Phi-4-mini-instruct-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "unsloth/Phi-4-mini-instruct-GGUF:Phi-4-mini-instruct-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Phi-4-mini-instruct-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 2.49,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "playable/Playable1-GGUF:Playable1-q4_k_m.gguf",
+            "checkpoints": {
+                "main": "playable/Playable1-GGUF:Playable1-q4_k_m.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Playable1-GGUF",
+            "labels": [
+                "coding"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 4.68,
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "mradermacher/PromptBridge-0.6b-Alpha-GGUF:PromptBridge-0.6b-Alpha.Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "mradermacher/PromptBridge-0.6b-Alpha-GGUF:PromptBridge-0.6b-Alpha.Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "PromptBridge-0.6b-Alpha-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.397,
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/llama-cpp/models/Qwen-AgentWorld-35B-A3B-GGUF",
+            "checkpoints": {
+                "main": "/opt/models/models/llama-cpp/models/Qwen-AgentWorld-35B-A3B-GGUF"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Qwen-AgentWorld-35B-A3B-GGUF",
+            "labels": [
+                "custom",
+                "tool-calling"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 20.6,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen-Image-2512-GGUF:qwen-image-2512-Q5_0.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen-Image-2512-GGUF:qwen-image-2512-Q5_0.gguf",
+                "text_encoder": "unsloth/Qwen2.5-VL-7B-Instruct-GGUF:Qwen2.5-VL-7B-Instruct-UD-Q4_K_XL.gguf",
+                "vae": "Comfy-Org/Qwen-Image_ComfyUI:split_files/vae/qwen_image_vae.safetensors"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen-Image-2512-GGUF",
+            "image_defaults": {
+                "cfg_scale": 2.5,
+                "flow_shift": 3.0,
+                "height": 512,
+                "sampling_method": "euler",
+                "steps": 20,
+                "width": 512
+            },
+            "labels": [
+                "image"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {
+                "cfg_scale": 2.5,
+                "flow_shift": 3.0,
+                "height": 512,
+                "sampling_method": "euler",
+                "sdcpp_args": "--diffusion-fa --offload-to-cpu",
+                "steps": 20,
+                "width": 512
+            },
+            "size": 19.4,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen-Image-GGUF:qwen-image-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen-Image-GGUF:qwen-image-Q4_K_M.gguf",
+                "text_encoder": "unsloth/Qwen2.5-VL-7B-Instruct-GGUF:Qwen2.5-VL-7B-Instruct-UD-Q4_K_XL.gguf",
+                "vae": "Comfy-Org/Qwen-Image_ComfyUI:split_files/vae/qwen_image_vae.safetensors"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen-Image-GGUF",
+            "image_defaults": {
+                "cfg_scale": 2.5,
+                "flow_shift": 3.0,
+                "height": 512,
+                "sampling_method": "euler",
+                "steps": 20,
+                "width": 512
+            },
+            "labels": [
+                "image"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {
+                "cfg_scale": 2.5,
+                "flow_shift": 3.0,
+                "height": 512,
+                "sampling_method": "euler",
+                "sdcpp_args": "--diffusion-fa --offload-to-cpu",
+                "steps": 20,
+                "width": 512
+            },
+            "size": 18.2,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen2.5-Coder-32B-Instruct-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "Qwen/Qwen2.5-Coder-32B-Instruct-GGUF:Q4_K_M"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen2.5-Coder-32B-Instruct-GGUF",
+            "labels": [
+                "coding"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 19.9,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggml-org/Qwen2.5-Omni-3B-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "ggml-org/Qwen2.5-Omni-3B-GGUF:Q4_K_M",
+                "mmproj": "ggml-org/Qwen2.5-Omni-3B-GGUF:mmproj-Qwen2.5-Omni-3B-f16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen2.5-Omni-3B-GGUF",
+            "labels": [
+                "vision",
+                "chat-transcription"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 4.73,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggml-org/Qwen2.5-Omni-7B-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "ggml-org/Qwen2.5-Omni-7B-GGUF:Q4_K_M",
+                "mmproj": "ggml-org/Qwen2.5-Omni-7B-GGUF:mmproj-Qwen2.5-Omni-7B-f16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen2.5-Omni-7B-GGUF",
+            "labels": [
+                "vision",
+                "chat-transcription"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 7.33,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggml-org/Qwen2.5-VL-3B-Instruct-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "ggml-org/Qwen2.5-VL-3B-Instruct-GGUF:Q4_K_M",
+                "mmproj": "ggml-org/Qwen2.5-VL-3B-Instruct-GGUF:mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen2.5-VL-3B-Instruct-GGUF",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 3.27,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggml-org/Qwen2.5-VL-7B-Instruct-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "ggml-org/Qwen2.5-VL-7B-Instruct-GGUF:Q4_K_M",
+                "mmproj": "ggml-org/Qwen2.5-VL-7B-Instruct-GGUF:mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen2.5-VL-7B-Instruct-GGUF",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 6.04,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-0.6B-GGUF:Q4_0",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-0.6B-GGUF:Q4_0"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-0.6B-GGUF",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.38,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-1.7B-GGUF:Q4_0",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-1.7B-GGUF:Q4_0"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-1.7B-GGUF",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 1.06,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-14B-GGUF:Q4_0",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-14B-GGUF:Q4_0"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-14B-GGUF",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 8.54,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-30B-A3B-GGUF:Q4_0",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-30B-A3B-GGUF:Q4_0"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-30B-A3B-GGUF",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 17.4,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Qwen3-30B-A3B-Instruct-2507-Q4_0.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Qwen3-30B-A3B-Instruct-2507-Q4_0.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-30B-A3B-Instruct-2507-GGUF",
+            "labels": [
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 17.4,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-4B-GGUF:Q4_0",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-4B-GGUF:Q4_0"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-4B-GGUF",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 2.38,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-4B-Instruct-2507-GGUF:Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-4B-Instruct-2507-GGUF:Qwen3-4B-Instruct-2507-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-4B-Instruct-2507-GGUF",
+            "labels": [
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 2.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-8B-GGUF:Q4_1",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-8B-GGUF:Q4_1"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-8B-GGUF",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 5.25,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF:Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF:Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-Coder-30B-A3B-Instruct-GGUF",
+            "labels": [
+                "coding",
+                "tool-calling",
+                "hot"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 18.6,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-Coder-Next-GGUF:Qwen3-Coder-Next-MXFP4_MOE.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-Coder-Next-GGUF:Qwen3-Coder-Next-MXFP4_MOE.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-Coder-Next-GGUF",
+            "labels": [
+                "coding",
+                "tool-calling",
+                "hot"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 48.0,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3-Embedding-0.6B-GGUF:Qwen3-Embedding-0.6B-Q8_0.gguf",
+            "checkpoints": {
+                "main": "Qwen/Qwen3-Embedding-0.6B-GGUF:Qwen3-Embedding-0.6B-Q8_0.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-Embedding-0.6B-GGUF",
+            "labels": [
+                "embeddings"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.64,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3-Embedding-4B-GGUF:Qwen3-Embedding-4B-Q8_0.gguf",
+            "checkpoints": {
+                "main": "Qwen/Qwen3-Embedding-4B-GGUF:Qwen3-Embedding-4B-Q8_0.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-Embedding-4B-GGUF",
+            "labels": [
+                "embeddings"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 4.28,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3-Embedding-8B-GGUF:Qwen3-Embedding-8B-Q8_0.gguf",
+            "checkpoints": {
+                "main": "Qwen/Qwen3-Embedding-8B-GGUF:Qwen3-Embedding-8B-Q8_0.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-Embedding-8B-GGUF",
+            "labels": [
+                "embeddings"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 8.05,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3-Next-80B-A3B-Instruct-GGUF:Qwen3-Next-80B-A3B-Instruct-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3-Next-80B-A3B-Instruct-GGUF:Qwen3-Next-80B-A3B-Instruct-UD-Q4_K_XL.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-Next-80B-A3B-Instruct-GGUF",
+            "labels": [
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 46.1,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3-VL-4B-Instruct-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "Qwen/Qwen3-VL-4B-Instruct-GGUF:Q4_K_M",
+                "mmproj": "Qwen/Qwen3-VL-4B-Instruct-GGUF:mmproj-Qwen3VL-4B-Instruct-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-VL-4B-Instruct-GGUF",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 3.33,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3-VL-8B-Instruct-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "Qwen/Qwen3-VL-8B-Instruct-GGUF:Q4_K_M",
+                "mmproj": "Qwen/Qwen3-VL-8B-Instruct-GGUF:mmproj-Qwen3VL-8B-Instruct-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3-VL-8B-Instruct-GGUF",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 6.19,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3.5-0.8B",
+            "checkpoints": {
+                "main": "Qwen/Qwen3.5-0.8B"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-0.8B-FP16-vLLM",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "vllm",
+            "recipe_options": {},
+            "size": 1.77,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.5-0.8B-GGUF:Qwen3.5-0.8B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.5-0.8B-GGUF:Qwen3.5-0.8B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.5-0.8B-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-0.8B-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.764,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.5-122B-A10B-GGUF:UD-Q4_K_XL",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.5-122B-A10B-GGUF:UD-Q4_K_XL",
+                "mmproj": "unsloth/Qwen3.5-122B-A10B-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-122B-A10B-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 77.9,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.5-122B-A10B-MTP-GGUF:UD-Q4_K_XL",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.5-122B-A10B-MTP-GGUF:UD-Q4_K_XL",
+                "mmproj": "unsloth/Qwen3.5-122B-A10B-MTP-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-122B-A10B-MTP-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling",
+                "mtp"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 79.6,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.5-27B-GGUF:Qwen3.5-27B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.5-27B-GGUF:Qwen3.5-27B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.5-27B-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-27B-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 18.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3.5-2B",
+            "checkpoints": {
+                "main": "Qwen/Qwen3.5-2B"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-2B-FP16-vLLM",
+            "labels": [
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "vllm",
+            "recipe_options": {},
+            "size": 4.57,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.5-2B-GGUF:Qwen3.5-2B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.5-2B-GGUF:Qwen3.5-2B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.5-2B-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-2B-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 2.01,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.5-35B-A3B-GGUF:Qwen3.5-35B-A3B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.5-35B-A3B-GGUF:Qwen3.5-35B-A3B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.5-35B-A3B-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-35B-A3B-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 23.1,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3.5-4B",
+            "checkpoints": {
+                "main": "Qwen/Qwen3.5-4B"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-4B-FP16-vLLM",
+            "labels": [
+                "reasoning",
+                "hot",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "vllm",
+            "recipe_options": {},
+            "size": 9.34,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.5-4B-GGUF:Qwen3.5-4B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.5-4B-GGUF:Qwen3.5-4B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.5-4B-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-4B-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling",
+                "hot"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 3.58,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.5-4B-MTP-GGUF:Qwen3.5-4B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.5-4B-MTP-GGUF:Qwen3.5-4B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.5-4B-MTP-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Qwen3.5-4B-MTP-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling",
+                "mtp"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {
+                "ctx_size": 196608,
+                "llamacpp_args": "--parallel 4",
+                "pinned": true
+            },
+            "size": 3.41,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3.5-9B",
+            "checkpoints": {
+                "main": "Qwen/Qwen3.5-9B"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-9B-FP16-vLLM",
+            "labels": [
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "vllm",
+            "recipe_options": {},
+            "size": 19.3,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.5-9B-GGUF:Qwen3.5-9B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.5-9B-GGUF:Qwen3.5-9B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.5-9B-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.5-9B-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 6.88,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3.6-27B",
+            "checkpoints": {
+                "main": "Qwen/Qwen3.6-27B"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.6-27B-FP16-vLLM",
+            "labels": [
+                "reasoning",
+                "tool-calling",
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "vllm",
+            "recipe_options": {},
+            "size": 55.59,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.6-27B-GGUF:Qwen3.6-27B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.6-27B-GGUF:Qwen3.6-27B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.6-27B-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.6-27B-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 18.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.6-27B-MTP-GGUF:Qwen3.6-27B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.6-27B-MTP-GGUF:Qwen3.6-27B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.6-27B-MTP-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.6-27B-MTP-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling",
+                "mtp",
+                "hot"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 18.8,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/llama-cpp/models/Qwen3.6-35B-A3B-Claude-4.6-Opus-Reasoning-Distilled-GGUF",
+            "checkpoints": {
+                "main": "/opt/models/models/llama-cpp/models/Qwen3.6-35B-A3B-Claude-4.6-Opus-Reasoning-Distilled-GGUF"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Qwen3.6-35B-A3B-Claude-4.6-Opus-Reasoning-Distilled-GGUF",
+            "labels": [
+                "custom",
+                "tool-calling"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 19.7,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Qwen/Qwen3.6-35B-A3B",
+            "checkpoints": {
+                "main": "Qwen/Qwen3.6-35B-A3B"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.6-35B-A3B-FP16-vLLM",
+            "labels": [
+                "reasoning",
+                "tool-calling",
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "vllm",
+            "recipe_options": {},
+            "size": 71.93,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.6-35B-A3B-GGUF:Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.6-35B-A3B-GGUF:Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.6-35B-A3B-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Qwen3.6-35B-A3B-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling",
+                "hot"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 23.3,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/Qwen3.6-35B-A3B-MTP-GGUF:Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/Qwen3.6-35B-A3B-MTP-GGUF:Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf",
+                "mmproj": "unsloth/Qwen3.6-35B-A3B-MTP-GGUF:mmproj-F16.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Qwen3.6-35B-A3B-MTP-GGUF",
+            "labels": [
+                "vision",
+                "tool-calling",
+                "mtp"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 22.1,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/llama-cpp/models/Qwopus3.6-27B-Coder-Compat-MTP-GGUF",
+            "checkpoints": {
+                "main": "/opt/models/models/llama-cpp/models/Qwopus3.6-27B-Coder-Compat-MTP-GGUF"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Qwopus3.6-27B-Coder-Compat-MTP-GGUF",
+            "labels": [
+                "custom",
+                "tool-calling",
+                "mtp"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 15.7,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/llama-cpp/models/Qwopus3.6-35B-A3B-Coder-MTP-Q4_K_M",
+            "checkpoints": {
+                "main": "/opt/models/models/llama-cpp/models/Qwopus3.6-35B-A3B-Coder-MTP-Q4_K_M"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Qwopus3.6-35B-A3B-Coder-MTP-Q4_K_M",
+            "labels": [
+                "custom",
+                "tool-calling",
+                "mtp"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 20.2,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/llama-cpp/models/Qwopus3.6-35B-A3B-v1-GGUF",
+            "checkpoints": {
+                "main": "/opt/models/models/llama-cpp/models/Qwopus3.6-35B-A3B-v1-GGUF"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "Qwopus3.6-35B-A3B-v1-GGUF",
+            "labels": [
+                "custom",
+                "tool-calling"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 19.7,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "lemonade-sdk/RPG-HaloTales-V1",
+            "checkpoints": {
+                "main": "lemonade-sdk/RPG-HaloTales-V1"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "RPG-HaloTales-V1",
+            "labels": [],
+            "models": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "collection.omni",
+            "recipe_options": {},
+            "size": 39.77,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "amd/realesrgan-x4plus:RealESRGAN_x4plus.pth",
+            "checkpoints": {
+                "main": "amd/realesrgan-x4plus:RealESRGAN_x4plus.pth"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "RealESRGAN-x4plus",
+            "labels": [
+                "upscaling",
+                "image"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {},
+            "size": 0.064,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "amd/realesrgan-x4plus-anime-6b:RealESRGAN_x4plus_anime_6B.pth",
+            "checkpoints": {
+                "main": "amd/realesrgan-x4plus-anime-6b:RealESRGAN_x4plus_anime_6B.pth"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "RealESRGAN-x4plus-anime",
+            "labels": [
+                "upscaling",
+                "image"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {},
+            "size": 0.017,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "stable-diffusion-v1-5/stable-diffusion-v1-5:v1-5-pruned.safetensors",
+            "checkpoints": {
+                "main": "stable-diffusion-v1-5/stable-diffusion-v1-5:v1-5-pruned.safetensors"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "SD-1.5",
+            "image_defaults": {
+                "cfg_scale": 7.5,
+                "height": 512,
+                "steps": 20,
+                "width": 512
+            },
+            "labels": [
+                "image"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {
+                "cfg_scale": 7.5,
+                "height": 512,
+                "steps": 20,
+                "width": 512
+            },
+            "size": 7.7,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "stabilityai/sd-turbo:sd_turbo.safetensors",
+            "checkpoints": {
+                "main": "stabilityai/sd-turbo:sd_turbo.safetensors"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "SD-Turbo",
+            "image_defaults": {
+                "cfg_scale": 1.0,
+                "height": 512,
+                "steps": 4,
+                "width": 512
+            },
+            "labels": [
+                "image"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {
+                "cfg_scale": 1.0,
+                "height": 512,
+                "steps": 4,
+                "width": 512
+            },
+            "size": 5.21,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Green-Sky/SD-Turbo-GGUF:sd_turbo-f16-q8_0.gguf",
+            "checkpoints": {
+                "main": "Green-Sky/SD-Turbo-GGUF:sd_turbo-f16-q8_0.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "SD-Turbo-GGUF",
+            "image_defaults": {
+                "cfg_scale": 1.0,
+                "height": 512,
+                "steps": 4,
+                "width": 512
+            },
+            "labels": [
+                "image"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {
+                "cfg_scale": 1.0,
+                "height": 512,
+                "steps": 4,
+                "width": 512
+            },
+            "size": 2.02,
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "stabilityai/stable-diffusion-xl-base-1.0:sd_xl_base_1.0.safetensors",
+            "checkpoints": {
+                "main": "stabilityai/stable-diffusion-xl-base-1.0:sd_xl_base_1.0.safetensors"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "SDXL-Base-1.0",
+            "image_defaults": {
+                "cfg_scale": 7.5,
+                "height": 1024,
+                "steps": 20,
+                "width": 1024
+            },
+            "labels": [
+                "image"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {
+                "cfg_scale": 7.5,
+                "height": 1024,
+                "steps": 20,
+                "width": 1024
+            },
+            "size": 6.94,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "stabilityai/sdxl-turbo:sd_xl_turbo_1.0_fp16.safetensors",
+            "checkpoints": {
+                "main": "stabilityai/sdxl-turbo:sd_xl_turbo_1.0_fp16.safetensors"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "SDXL-Turbo",
+            "image_defaults": {
+                "cfg_scale": 1.0,
+                "height": 512,
+                "steps": 4,
+                "width": 512
+            },
+            "labels": [
+                "image"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {
+                "cfg_scale": 1.0,
+                "height": 512,
+                "steps": 4,
+                "width": 512
+            },
+            "size": 6.94,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/SmolLM3-3B-128K-GGUF:SmolLM3-3B-128K-UD-Q4_K_XL.gguf",
+            "checkpoints": {
+                "main": "unsloth/SmolLM3-3B-128K-GGUF:SmolLM3-3B-128K-UD-Q4_K_XL.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "SmolLM3-3B-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 1.94,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ilintar/thinksound-gguf",
+            "checkpoints": {
+                "main": "ilintar/thinksound-gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "ThinkSound-SFX",
+            "labels": [
+                "audio-generation"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "thinksound",
+            "recipe_options": {},
+            "size": 6.4,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gemma-3-270m-it-GGUF:gemma-3-270m-it-UD-IQ2_M.gguf",
+            "checkpoints": {
+                "main": "unsloth/gemma-3-270m-it-GGUF:gemma-3-270m-it-UD-IQ2_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Tiny-Test-Model-GGUF",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.18,
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "",
+            "checkpoints": {
+                "main": ""
+            },
+            "components": [
+                "Qwen3.5-35B-A3B-GGUF",
+                "Flux-2-Klein-9B-GGUF",
+                "Whisper-Large-v3-Turbo",
+                "kokoro-v1"
+            ],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Ultra Collection",
+            "labels": [],
+            "models": [
+                {
+                    "checkpoint": "unsloth/Qwen3.5-35B-A3B-GGUF:Qwen3.5-35B-A3B-UD-Q4_K_XL.gguf",
+                    "checkpoints": {
+                        "main": "unsloth/Qwen3.5-35B-A3B-GGUF:Qwen3.5-35B-A3B-UD-Q4_K_XL.gguf",
+                        "mmproj": "unsloth/Qwen3.5-35B-A3B-GGUF:mmproj-F16.gguf"
+                    },
+                    "components": [],
+                    "created": 1234567890,
+                    "downloaded": false,
+                    "id": "Qwen3.5-35B-A3B-GGUF",
+                    "labels": [
+                        "vision",
+                        "tool-calling"
+                    ],
+                    "object": "model",
+                    "owned_by": "lemonade",
+                    "recipe": "llamacpp",
+                    "recipe_options": {},
+                    "size": 23.1,
+                    "suggested": true,
+                    "update_available": false
+                },
+                {
+                    "checkpoint": "unsloth/FLUX.2-klein-9B-GGUF:flux-2-klein-9b-Q8_0.gguf",
+                    "checkpoints": {
+                        "main": "unsloth/FLUX.2-klein-9B-GGUF:flux-2-klein-9b-Q8_0.gguf",
+                        "text_encoder": "unsloth/Qwen3-8B-GGUF:Qwen3-8B-Q8_0.gguf",
+                        "vae": "Comfy-Org/vae-text-encorder-for-flux-klein-9b:split_files/vae/flux2-vae.safetensors"
+                    },
+                    "components": [],
+                    "created": 1234567890,
+                    "downloaded": false,
+                    "id": "Flux-2-Klein-9B-GGUF",
+                    "image_defaults": {
+                        "cfg_scale": 1.0,
+                        "height": 256,
+                        "steps": 4,
+                        "width": 256
+                    },
+                    "labels": [
+                        "image",
+                        "edit"
+                    ],
+                    "object": "model",
+                    "owned_by": "lemonade",
+                    "recipe": "sd-cpp",
+                    "recipe_options": {
+                        "cfg_scale": 1.0,
+                        "height": 256,
+                        "steps": 4,
+                        "width": 256
+                    },
+                    "size": 19.0,
+                    "suggested": true,
+                    "update_available": false
+                },
+                {
+                    "checkpoint": "ggerganov/whisper.cpp:ggml-large-v3-turbo.bin",
+                    "checkpoints": {
+                        "main": "ggerganov/whisper.cpp:ggml-large-v3-turbo.bin",
+                        "npu_cache": "amd/whisper-large-turbo-onnx-npu:ggml-large-v3-turbo-encoder-vitisai.rai"
+                    },
+                    "components": [],
+                    "created": 1234567890,
+                    "downloaded": false,
+                    "id": "Whisper-Large-v3-Turbo",
+                    "labels": [
+                        "transcription",
+                        "realtime-transcription",
+                        "hot"
+                    ],
+                    "object": "model",
+                    "owned_by": "lemonade",
+                    "recipe": "whispercpp",
+                    "recipe_options": {},
+                    "size": 1.62,
+                    "suggested": true,
+                    "update_available": false
+                },
+                {
+                    "checkpoint": "mikkoph/kokoro-onnx",
+                    "checkpoints": {
+                        "main": "mikkoph/kokoro-onnx"
+                    },
+                    "components": [],
+                    "created": 1234567890,
+                    "downloaded": false,
+                    "id": "kokoro-v1",
+                    "labels": [
+                        "tts"
+                    ],
+                    "object": "model",
+                    "owned_by": "lemonade",
+                    "recipe": "kokoro",
+                    "recipe_options": {},
+                    "size": 0.354,
+                    "suggested": true,
+                    "update_available": false
+                }
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "collection.omni",
+            "recipe_options": {},
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggerganov/whisper.cpp:ggml-base.bin",
+            "checkpoints": {
+                "main": "ggerganov/whisper.cpp:ggml-base.bin",
+                "npu_cache": "amd/whisper-base-onnx-npu:ggml-base-encoder-vitisai.rai"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Whisper-Base",
+            "labels": [
+                "transcription",
+                "realtime-transcription"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "whispercpp",
+            "recipe_options": {},
+            "size": 0.148,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggerganov/whisper.cpp:ggml-large-v3.bin",
+            "checkpoints": {
+                "main": "ggerganov/whisper.cpp:ggml-large-v3.bin",
+                "npu_cache": "amd/whisper-large-v3-onnx-npu:ggml-large-v3-encoder-vitisai.rai"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Whisper-Large-v3",
+            "labels": [
+                "transcription",
+                "realtime-transcription"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "whispercpp",
+            "recipe_options": {},
+            "size": 3.1,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggerganov/whisper.cpp:ggml-large-v3-turbo.bin",
+            "checkpoints": {
+                "main": "ggerganov/whisper.cpp:ggml-large-v3-turbo.bin",
+                "npu_cache": "amd/whisper-large-turbo-onnx-npu:ggml-large-v3-turbo-encoder-vitisai.rai"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Whisper-Large-v3-Turbo",
+            "labels": [
+                "transcription",
+                "realtime-transcription",
+                "hot"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "whispercpp",
+            "recipe_options": {},
+            "size": 1.62,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggerganov/whisper.cpp:ggml-medium.bin",
+            "checkpoints": {
+                "main": "ggerganov/whisper.cpp:ggml-medium.bin",
+                "npu_cache": "amd/whisper-medium-onnx-npu:ggml-medium-encoder-vitisai.rai"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Whisper-Medium",
+            "labels": [
+                "transcription",
+                "realtime-transcription"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "whispercpp",
+            "recipe_options": {},
+            "size": 1.53,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggerganov/whisper.cpp:ggml-small.bin",
+            "checkpoints": {
+                "main": "ggerganov/whisper.cpp:ggml-small.bin",
+                "npu_cache": "amd/whisper-small-onnx-npu:ggml-small-encoder-vitisai.rai"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Whisper-Small",
+            "labels": [
+                "transcription",
+                "realtime-transcription"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "whispercpp",
+            "recipe_options": {},
+            "size": 0.488,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggerganov/whisper.cpp:ggml-tiny.bin",
+            "checkpoints": {
+                "main": "ggerganov/whisper.cpp:ggml-tiny.bin",
+                "npu_cache": "amd/whisper-tiny-onnx-npu:ggml-tiny-encoder-vitisai.rai"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Whisper-Tiny",
+            "labels": [
+                "transcription",
+                "realtime-transcription"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "whispercpp",
+            "recipe_options": {},
+            "size": 0.075,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "Comfy-Org/z_image_turbo:split_files/diffusion_models/z_image_turbo_bf16.safetensors",
+            "checkpoints": {
+                "main": "Comfy-Org/z_image_turbo:split_files/diffusion_models/z_image_turbo_bf16.safetensors",
+                "text_encoder": "Comfy-Org/z_image_turbo:split_files/text_encoders/qwen_3_4b.safetensors",
+                "vae": "Comfy-Org/z_image_turbo:split_files/vae/ae.safetensors"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "Z-Image-Turbo",
+            "image_defaults": {
+                "cfg_scale": 1.0,
+                "height": 1024,
+                "steps": 9,
+                "width": 1024
+            },
+            "labels": [
+                "image"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "sd-cpp",
+            "recipe_options": {
+                "cfg_scale": 1.0,
+                "height": 1024,
+                "steps": 9,
+                "width": 1024
+            },
+            "size": 20.7,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "pqnet/bge-reranker-v2-m3-Q8_0-GGUF",
+            "checkpoints": {
+                "main": "pqnet/bge-reranker-v2-m3-Q8_0-GGUF"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "bge-reranker-v2-m3-GGUF",
+            "labels": [
+                "reranking"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.636,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "deepseek-r1-0528:8b",
+            "checkpoints": {
+                "main": "deepseek-r1-0528:8b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "deepseek-r1-0528-8b-FLM",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 5.6,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "deepseek-r1:8b",
+            "checkpoints": {
+                "main": "deepseek-r1:8b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "deepseek-r1-8b-FLM",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 5.4,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "embed-gemma:300m",
+            "checkpoints": {
+                "main": "embed-gemma:300m"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "embed-gemma-300m-FLM",
+            "labels": [
+                "embeddings"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/gemma-3-4b-it-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "/opt/models/models/gemma-3-4b-it-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "gemma-3-4b-it-Q4_K_M",
+            "labels": [
+                "custom"
+            ],
+            "max_context_window": 131072,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 2.32,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/gemma-4-26B-A4B-it-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "/opt/models/models/gemma-4-26B-A4B-it-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "gemma-4-26B-A4B-it-Q4_K_M",
+            "labels": [
+                "custom",
+                "tool-calling"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 15.6,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/gemma-4-E2B-it-Q8_0.gguf",
+            "checkpoints": {
+                "main": "/opt/models/models/gemma-4-E2B-it-Q8_0.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "gemma-4-E2B-it-Q8_0",
+            "labels": [
+                "custom",
+                "tool-calling"
+            ],
+            "max_context_window": 131072,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 4.63,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/gemma-4-E4B-it-Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "/opt/models/models/gemma-4-E4B-it-Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "gemma-4-E4B-it-Q4_K_M",
+            "labels": [
+                "custom",
+                "tool-calling"
+            ],
+            "max_context_window": 131072,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 4.97,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "gemma3:1b",
+            "checkpoints": {
+                "main": "gemma3:1b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "gemma3-1b-FLM",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 1.2,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "gemma3:4b",
+            "checkpoints": {
+                "main": "gemma3:4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "gemma3-4b-FLM",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 4.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "gemma4-it:e2b",
+            "checkpoints": {
+                "main": "gemma4-it:e2b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "gemma4-it-e2b-FLM",
+            "labels": [
+                "audio",
+                "vision",
+                "reasoning",
+                "tool-calling",
+                "chat-transcription"
+            ],
+            "max_context_window": 131072,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "gemma4-it:e4b",
+            "checkpoints": {
+                "main": "gemma4-it:e4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "gemma4-it-e4b-FLM",
+            "labels": [
+                "audio",
+                "vision",
+                "reasoning",
+                "tool-calling",
+                "chat-transcription"
+            ],
+            "max_context_window": 131072,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gpt-oss-120b-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "unsloth/gpt-oss-120b-GGUF:Q4_K_M"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "gpt-oss-120b-GGUF",
+            "labels": [
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 62.8,
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggml-org/gpt-oss-120b-GGUF:*",
+            "checkpoints": {
+                "main": "ggml-org/gpt-oss-120b-GGUF:*"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "gpt-oss-120b-mxfp-GGUF",
+            "labels": [
+                "hot",
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 63.4,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "gpt-oss:20b",
+            "checkpoints": {
+                "main": "gpt-oss:20b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "gpt-oss-20b-FLM",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 14.0,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/gpt-oss-20b-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "unsloth/gpt-oss-20b-GGUF:Q4_K_M"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "gpt-oss-20b-GGUF",
+            "labels": [
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 11.6,
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "ggml-org/gpt-oss-20b-GGUF",
+            "checkpoints": {
+                "main": "ggml-org/gpt-oss-20b-GGUF"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "gpt-oss-20b-mxfp4-GGUF",
+            "labels": [
+                "hot",
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 12.1,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "gpt-oss-sg:20b",
+            "checkpoints": {
+                "main": "gpt-oss-sg:20b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "gpt-oss-sg-20b-FLM",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 14.0,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "unsloth/granite-4.0-h-tiny-GGUF:Q4_K_M",
+            "checkpoints": {
+                "main": "unsloth/granite-4.0-h-tiny-GGUF:Q4_K_M"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "granite-4.0-h-tiny-GGUF",
+            "labels": [
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 4.25,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "/opt/models/models/hermes-3-llama-3.1-8b-lorablated.Q4_K_M.gguf",
+            "checkpoints": {
+                "main": "/opt/models/models/hermes-3-llama-3.1-8b-lorablated.Q4_K_M.gguf"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "hermes-3-llama-3.1-8b-lorablated.Q4_K_M",
+            "labels": [
+                "custom"
+            ],
+            "max_context_window": 131072,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 4.58,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "mradermacher/jina-reranker-v1-tiny-en-GGUF:Q8_0",
+            "checkpoints": {
+                "main": "mradermacher/jina-reranker-v1-tiny-en-GGUF:Q8_0"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "jina-reranker-v1-tiny-en-GGUF",
+            "labels": [
+                "reranking"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.0367,
+            "suggested": false,
+            "update_available": false
+        },
+        {
+            "checkpoint": "mikkoph/kokoro-onnx",
+            "checkpoints": {
+                "main": "mikkoph/kokoro-onnx"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "kokoro-v1",
+            "labels": [
+                "tts"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "kokoro",
+            "recipe_options": {},
+            "size": 0.354,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "lfm2:1.2b",
+            "checkpoints": {
+                "main": "lfm2:1.2b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "lfm2-1.2b-FLM",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 0.96,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "lfm2:2.6b",
+            "checkpoints": {
+                "main": "lfm2:2.6b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "lfm2-2.6b-FLM",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 1.8,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "lfm2-trans:2.6b",
+            "checkpoints": {
+                "main": "lfm2-trans:2.6b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "lfm2-trans-2.6b-FLM",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 1.8,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "lfm2.5-it:1.2b",
+            "checkpoints": {
+                "main": "lfm2.5-it:1.2b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "lfm2.5-it-1.2b-FLM",
+            "labels": [],
+            "max_context_window": 128000,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "lfm2.5-tk:1.2b",
+            "checkpoints": {
+                "main": "lfm2.5-tk:1.2b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "lfm2.5-tk-1.2b-FLM",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 0.96,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "llama3.1:8b",
+            "checkpoints": {
+                "main": "llama3.1:8b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "llama3.1-8b-FLM",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 5.4,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "llama3.2:1b",
+            "checkpoints": {
+                "main": "llama3.2:1b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "llama3.2-1b-FLM",
+            "labels": [],
+            "max_context_window": 131072,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "llama3.2:3b",
+            "checkpoints": {
+                "main": "llama3.2:3b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "llama3.2-3b-FLM",
+            "labels": [],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 2.7,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "medgemma:4b",
+            "checkpoints": {
+                "main": "medgemma:4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "medgemma-4b-FLM",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 4.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "medgemma1.5:4b",
+            "checkpoints": {
+                "main": "medgemma1.5:4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "medgemma1.5-4b-FLM",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 4.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "nanbeige4.1:3b",
+            "checkpoints": {
+                "main": "nanbeige4.1:3b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "nanbeige4.1-3b-FLM",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 3.1,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "nomic-ai/nomic-embed-text-v1-GGUF:Q4_K_S",
+            "checkpoints": {
+                "main": "nomic-ai/nomic-embed-text-v1-GGUF:Q4_K_S"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "nomic-embed-text-v1-GGUF",
+            "labels": [
+                "embeddings"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.0781,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "nomic-ai/nomic-embed-text-v2-moe-GGUF:Q8_0",
+            "checkpoints": {
+                "main": "nomic-ai/nomic-embed-text-v2-moe-GGUF:Q8_0"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "nomic-embed-text-v2-moe-GGUF",
+            "labels": [
+                "embeddings"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "llamacpp",
+            "recipe_options": {},
+            "size": 0.51,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "phi4-mini-it:4b",
+            "checkpoints": {
+                "main": "phi4-mini-it:4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "phi4-mini-it-4b-FLM",
+            "labels": [],
+            "max_context_window": 131072,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen2.5-it:3b",
+            "checkpoints": {
+                "main": "qwen2.5-it:3b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "qwen2.5-it-3b-FLM",
+            "labels": [],
+            "max_context_window": 32768,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen2.5vl-it:3b",
+            "checkpoints": {
+                "main": "qwen2.5vl-it:3b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen2.5vl-it-3b-FLM",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 3.8,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3:0.6b",
+            "checkpoints": {
+                "main": "qwen3:0.6b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen3-0.6b-FLM",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 0.66,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3:1.7b",
+            "checkpoints": {
+                "main": "qwen3:1.7b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen3-1.7b-FLM",
+            "labels": [
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 1.6,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3:4b",
+            "checkpoints": {
+                "main": "qwen3:4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen3-4b-FLM",
+            "labels": [
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 3.1,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3:8b",
+            "checkpoints": {
+                "main": "qwen3:8b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen3-8b-FLM",
+            "labels": [
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 5.6,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3-it:4b",
+            "checkpoints": {
+                "main": "qwen3-it:4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen3-it-4b-FLM",
+            "labels": [
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 3.1,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3-tk:4b",
+            "checkpoints": {
+                "main": "qwen3-tk:4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen3-tk-4b-FLM",
+            "labels": [
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 3.1,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3.5:0.8b",
+            "checkpoints": {
+                "main": "qwen3.5:0.8b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen3.5-0.8b-FLM",
+            "labels": [
+                "vision",
+                "reasoning"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 1.4,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3.5:2b",
+            "checkpoints": {
+                "main": "qwen3.5:2b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": true,
+            "id": "qwen3.5-2b-FLM",
+            "labels": [
+                "vision",
+                "reasoning",
+                "tool-calling"
+            ],
+            "max_context_window": 262144,
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3.5:4b",
+            "checkpoints": {
+                "main": "qwen3.5:4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen3.5-4b-FLM",
+            "labels": [
+                "vision",
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 5.2,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3.5:9b",
+            "checkpoints": {
+                "main": "qwen3.5:9b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen3.5-9b-FLM",
+            "labels": [
+                "vision",
+                "reasoning",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 8.94,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "qwen3vl-it:4b",
+            "checkpoints": {
+                "main": "qwen3vl-it:4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "qwen3vl-it-4b-FLM",
+            "labels": [
+                "vision",
+                "tool-calling"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 3.9,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "translategemma:4b",
+            "checkpoints": {
+                "main": "translategemma:4b"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "translategemma-4b-FLM",
+            "labels": [
+                "vision"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 4.5,
+            "suggested": true,
+            "update_available": false
+        },
+        {
+            "checkpoint": "whisper-v3:turbo",
+            "checkpoints": {
+                "main": "whisper-v3:turbo"
+            },
+            "components": [],
+            "created": 1234567890,
+            "downloaded": false,
+            "id": "whisper-v3-turbo-FLM",
+            "labels": [
+                "audio",
+                "realtime-transcription",
+                "transcription"
+            ],
+            "object": "model",
+            "owned_by": "lemonade",
+            "recipe": "flm",
+            "recipe_options": {},
+            "size": 0.62,
+            "suggested": true,
+            "update_available": false
+        }
+    ],
+    "object": "list"
+}

@@ -1,0 +1,45 @@
+# HELM — local dev stack.
+#
+# For running the two containers on a dev box against the REAL Lemonade
+# (reads are open; no admin key = no writes = you cannot break the fleet).
+#
+#   docker compose -f infra/docker-compose.yml up --build
+#   open http://localhost:5080
+#
+# For hot-reload frontend work, skip this and run the two processes directly:
+#   backend : HELM_DEV_MODE=true HELM_DATA_DIR=./.data uvicorn kblocallm.main:app --reload
+#   frontend: npm run dev          (Vite proxies /api -> :8000, same-origin)
+#
+# HELM_DEV_MODE=true tells the backend not to mark the session cookie Secure,
+# which a browser would otherwise drop over http://localhost and login would
+# silently do nothing.
+
+services:
+  helm-api:
+    build:
+      # Repo root as context — the Dockerfiles COPY with a leading dir.
+      context: ..
+      dockerfile: backend/Dockerfile
+    environment:
+      HELM_DATA_DIR: /data
+      HELM_LEMONADE_URL: ${HELM_LEMONADE_URL:-http://YOUR_LEMONADE_HOST:13305}
+      # Intentionally empty by default. Dev runs READ-ONLY unless you opt in.
+      # An accidental unload on the box six agents share is not a fun way to
+      # learn that your dev stack had write access.
+      HELM_LEMONADE_ADMIN_API_KEY: ${HELM_LEMONADE_ADMIN_API_KEY:-}
+      HELM_DEV_MODE: "true"
+    volumes:
+      - ./.data:/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  helm-web:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5080:80"
+    depends_on:
+      - helm-api
+    restart: unless-stopped

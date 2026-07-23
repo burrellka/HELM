@@ -1,0 +1,96 @@
+# HELM — production Docker stack.
+#
+# Put this file and a `.env` (copied from .env.example) in the same folder,
+# then:
+#
+#   docker compose -f docker-compose.production.yml pull
+#   docker compose -f docker-compose.production.yml up -d
+#
+# Open http://<this-host>:5080 and pick an operator password on first visit.
+#
+# HELM talks to a Lemonade Server you already run. Point HELM_LEMONADE_URL in
+# your .env at it. Everything else has a working default.
+
+services:
+  helm-api:
+    image: brain40/helm-api:0.8.1
+    container_name: helm-api
+
+    # Run as a normal user, not root, so files in the bind mount below are owned
+    # by you and not by root.
+    #
+    # PUID/PGID MUST match the owner of the host directory you mount at /data,
+    # or SQLite cannot write there and the app refuses to boot. Check on the host
+    # with `id <your-user>` and set them in .env (default 1000:1000).
+    #
+    # NOTE: this is Docker's OWN `user:` directive, NOT the LinuxServer.io
+    # PUID/PGID convention. This is a plain python:3.12-slim image with no
+    # s6-overlay init layer, so setting PUID/PGID as *environment variables*
+    # alone would do NOTHING. `user:` is enforced by Docker itself.
+    #
+    # ⚠ Do NOT copy this line to helm-web: the stock nginx image needs root for
+    # its master process. helm-web has no bind mount, so it owns nothing on disk.
+    user: "${PUID:-1000}:${PGID:-1000}"
+
+    environment:
+      # Container log timestamps only. HELM stores UTC internally and the UI
+      # renders in the browser's timezone.
+      TZ: ${TZ:-UTC}
+
+      # HELM's own state: SQLite, the JWT secret, the operator password hash.
+      HELM_DATA_DIR: /data
+
+      # Your Lemonade Server. Set this in .env. If Lemonade is a host service
+      # rather than a container, use the host's LAN IP, not a container name.
+      HELM_LEMONADE_URL: ${HELM_LEMONADE_URL:-http://YOUR_LEMONADE_HOST:13305}
+
+      # Gates Lemonade's management routes. Leave empty and HELM runs READ-ONLY:
+      # the dashboard works, writes refuse with a clear message, and the UI hides
+      # the write controls. NEVER bake a key into the image; keep it in .env.
+      HELM_LEMONADE_ADMIN_API_KEY: ${HELM_LEMONADE_ADMIN_API_KEY:-}
+
+      # Only if you enabled Lemonade's global key (gates ALL routes incl. reads
+      # and disables Lemonade's own UI). Usually blank.
+      HELM_LEMONADE_API_KEY: ${HELM_LEMONADE_API_KEY:-}
+
+      # Optional. Unset = HELM generates a per-instance secret at
+      # /data/jwt_secret on first boot and reuses it. Set only to own rotation.
+      HELM_JWT_SECRET: ${HELM_JWT_SECRET:-}
+
+      # Optional. A Google Gemini key for the Model Advisor's grounded web
+      # lookups (separate from any model key). Empty = advisor runs without live
+      # lookup and says so. Get one at https://aistudio.google.com.
+      HELM_WEB_SEARCH_KEY: ${HELM_WEB_SEARCH_KEY:-}
+    volumes:
+      # HOST ./helm-data  ->  CONTAINER /data
+      #
+      # Change the left side to wherever you want HELM's state to live. The
+      # container side must stay /data (that is where HELM_DATA_DIR points and
+      # where helm.db / jwt_secret / auth.json are written).
+      #
+      # Back this up: operator metadata (descriptions, tags, favourites) has NO
+      # upstream source of truth — Lemonade does not know about it — and the JWT
+      # secret + operator password hash live here too.
+      - ./helm-data:/data
+    restart: unless-stopped
+
+  helm-web:
+    image: brain40/helm-web:0.8.1
+    container_name: helm-web
+    ports:
+      # The UI. Reach it at http://<this-host>:5080. If you put a reverse proxy
+      # (nginx / Caddy / Nginx Proxy Manager) in front, point it here.
+      #
+      # ⚠ Security: HELM has its own operator login, but if you expose this port
+      # to an untrusted network, front it with TLS and treat the login as the
+      # only thing standing between the internet and your fleet controls. To bind
+      # to localhost only, change this to "127.0.0.1:5080:80".
+      - "5080:80"
+    depends_on:
+      - helm-api
+    restart: unless-stopped
+
+# helm-web reaches helm-api by service name over Compose's default network —
+# no external network required. If you run HELM alongside other stacks and want
+# them on a shared user-defined network, add a `networks:` block here and to
+# each service.
