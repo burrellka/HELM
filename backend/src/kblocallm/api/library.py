@@ -349,18 +349,39 @@ async def pull(body: PullBody, request: Request) -> dict:
 
 
 @router.get("/jobs")
-async def jobs(request: Request) -> Any:
-    """Download jobs. This is what makes §5.5 survive a reload.
+async def jobs(request: Request) -> dict:
+    """Download jobs — what makes a server-owned pull survive a browser reload,
+    and what the header download indicator polls.
 
-    Note the path: /v1/pull/jobs, NOT /api/v1/pull/jobs. Per spec §4.2 it is
-    listed under the /v1 prefix; the four prefixes are equivalent, but this is
-    the one the spec verified.
+    The live endpoint is `GET /api/v1/downloads` (the spec's `/v1/pull/jobs`
+    404s on the shipped Lemonade — verified against the box). Each job carries
+    `model_name`, `percent`, `running`, `status`, `error`, and byte counters
+    (`overall_bytes_downloaded` / `total_download_size`). We return the raw jobs
+    plus a normalized `active` view (running, not complete, no error) so the UI
+    does not have to re-derive "what's downloading right now" from a mixed list
+    that also holds finished and failed jobs. Download SPEED is not in the
+    payload; the client derives it from byte deltas between polls.
     """
     client: LemonadeClient = request.app.state.lemonade
     try:
-        return await client.request("GET", "/v1/pull/jobs", timeout=FAST)
+        raw = await client.request("GET", "/api/v1/downloads", timeout=FAST)
     except UpstreamError as e:
         raise HTTPException(status_code=502, detail={"kind": e.kind, "detail": str(e)})
+
+    jobs_list = raw if isinstance(raw, list) else (raw.get("downloads") or raw.get("jobs") or [])
+    active = [
+        {
+            "id": j.get("id"),
+            "model_name": j.get("model_name") or j.get("id"),
+            "percent": j.get("percent"),
+            "bytes_downloaded": j.get("overall_bytes_downloaded") or j.get("bytes_downloaded"),
+            "bytes_total": j.get("total_download_size") or j.get("bytes_total"),
+            "status": j.get("status"),
+        }
+        for j in jobs_list
+        if isinstance(j, dict) and j.get("running") and not j.get("complete") and not j.get("error")
+    ]
+    return {"jobs": jobs_list, "active": active, "active_count": len(active)}
 
 
 class DeleteBody(BaseModel):

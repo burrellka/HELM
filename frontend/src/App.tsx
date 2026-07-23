@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError, api, type AuthStatus, type SystemConfig } from './api/client';
 import Advisor from './pages/Advisor';
+import DownloadIndicator from './components/DownloadIndicator';
 import Dashboard from './pages/Dashboard';
 import Library from './pages/Library';
 import Logs from './pages/Logs';
@@ -111,10 +112,13 @@ function Header({ config, onLogout }: { config: SystemConfig | null; onLogout: (
         borderBottom: '1px solid var(--border-color)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.625rem' }}>
-        <span style={{ fontWeight: 700, fontSize: '1.0625rem' }}>HELM</span>
-        <span className="stat-sub">AI fleet control plane</span>
-        {config && <span className="stat-sub mono">v{config.version}</span>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.625rem' }}>
+          <span style={{ fontWeight: 700, fontSize: '1.0625rem' }}>HELM</span>
+          <span className="stat-sub">AI fleet control plane</span>
+          {config && <span className="stat-sub mono">v{config.version}</span>}
+        </div>
+        <DownloadIndicator />
       </div>
       <button type="button" className="btn-secondary" onClick={onLogout}>Log out</button>
     </header>

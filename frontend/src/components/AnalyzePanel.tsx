@@ -68,8 +68,9 @@ export default function AnalyzePanel({ modelId }: { modelId: string }) {
    *  then Save it, without confusing it with the persisted one. */
   const [freshSummary, setFreshSummary] = useState<GeneratedResult | null>(null);
 
-  // Deep analysis (heavy) state — separate, opt-in, not persisted.
+  // Deep analysis (heavy) state — separate, opt-in. Saveable into its own slot.
   const [deepRunning, setDeepRunning] = useState(false);
+  const [savingDeep, setSavingDeep] = useState(false);
   const [deep, setDeep] = useState<Record<string, any> | null>(null);
 
   const loadFacts = useCallback(async () => {
@@ -119,6 +120,21 @@ export default function AnalyzePanel({ modelId }: { modelId: string }) {
       setDeepRunning(false);
     }
   }, [modelId]);
+
+  const saveDeep = useCallback(async () => {
+    const text = deep?.text ? String(deep.text) : '';
+    if (!text) return;
+    setSavingDeep(true);
+    try {
+      await api.saveSummary(modelId, text, deep?.model ? String(deep.model) : null, 'deep');
+      setDeep(null);          // clear the fresh one; it now shows as saved
+      await loadFacts();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSavingDeep(false);
+    }
+  }, [deep, modelId, loadFacts]);
 
   useEffect(() => { void loadFacts(); }, [loadFacts]);
 
@@ -223,9 +239,12 @@ export default function AnalyzePanel({ modelId }: { modelId: string }) {
           label="Deep analysis"
           detail="The full teaching write-up: what it's good for, fit math, alternatives from your own models, live web search. Runs the big analysis model — slower." />
         <DeepAnalysis
-          result={deep}
+          fresh={deep}
+          saved={result.saved_deep}
           running={deepRunning}
+          saving={savingDeep}
           onRun={() => void runDeep()}
+          onSave={() => void saveDeep()}
         />
       </section>
     </div>
@@ -311,30 +330,57 @@ function Summary({ fresh, saved, summarizing, saving, onSummarize, onSave }: {
 }
 
 /**
- * The heavy synthesis, opt-in and generate-on-demand (not persisted — Summary is
- * the saved snapshot). This is the deep teach the architect kept unchanged.
+ * The heavy synthesis, opt-in. It takes real time on the big model, so — like
+ * Summary — once the operator likes one they can SAVE it into its own slot and
+ * it shows instantly on return, with Regenerate.
  */
-function DeepAnalysis({ result, running, onRun }: {
-  result: Record<string, any> | null; running: boolean; onRun: () => void;
+function DeepAnalysis({ fresh, saved, running, saving, onRun, onSave }: {
+  fresh: Record<string, any> | null;
+  saved: AnalyzeResult['saved_deep'];
+  running: boolean; saving: boolean;
+  onRun: () => void; onSave: () => void;
 }) {
-  const btnLabel = running ? 'Analyzing…' : result ? 'Regenerate deep analysis' : 'Run deep analysis (the big model, slower)';
+  const btnLabel = running ? 'Analyzing…'
+    : (saved || fresh) ? 'Regenerate deep analysis' : 'Run deep analysis (the big model, slower)';
 
-  if (result && !result.available) {
+  // A just-generated analysis awaiting Save takes priority.
+  if (fresh) {
+    if (!fresh.available) {
+      return (
+        <div style={{ marginTop: '0.5rem' }}>
+          <Callout tone="info">{String(fresh.note ?? '')}</Callout>
+          <button type="button" className="btn-secondary" style={{ marginTop: '0.5rem' }}
+            disabled={running} onClick={onRun}>{btnLabel}</button>
+        </div>
+      );
+    }
     return (
-      <div style={{ marginTop: '0.5rem' }}>
-        <Callout tone="info">{String(result.note ?? '')}</Callout>
-        <button type="button" className="btn-secondary" style={{ marginTop: '0.5rem' }}
-          disabled={running} onClick={onRun}>{btnLabel}</button>
+      <div style={{ marginTop: '0.625rem' }}>
+        <div className="card" style={{ borderLeft: '3px solid var(--status-warn)' }}>
+          <CollapsibleMarkdown text={String(fresh.text ?? '')} />
+          {fresh.label && <p className="stat-sub" style={{ marginTop: '0.5rem' }}>{String(fresh.label)}</p>}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+          <button type="button" className="btn-primary" disabled={saving} onClick={onSave}>
+            {saving ? 'Saving…' : 'Save this analysis'}
+          </button>
+          <button type="button" className="btn-secondary" disabled={running} onClick={onRun}>{btnLabel}</button>
+          <span className="stat-sub">Not saved yet. Save it to see it here instantly next time.</span>
+        </div>
       </div>
     );
   }
 
-  if (result?.available) {
+  if (saved) {
     return (
       <div style={{ marginTop: '0.625rem' }}>
         <div className="card" style={{ borderLeft: '3px solid var(--status-warn)' }}>
-          <CollapsibleMarkdown text={String(result.text ?? '')} />
-          {result.label && <p className="stat-sub" style={{ marginTop: '0.5rem' }}>{String(result.label)}</p>}
+          <CollapsibleMarkdown text={saved.text} />
+          <p className="stat-sub" style={{ marginTop: '0.5rem' }}>
+            Saved deep analysis{saved.analysis_model ? ` · by ${saved.analysis_model}` : ''}
+            {saved.generated_at ? ` · ${new Date(saved.generated_at + 'Z').toLocaleString()}` : ''}.
+            A dated snapshot over the facts as they were; the facts above are always live.
+          </p>
         </div>
         <div style={{ marginTop: '0.5rem' }}>
           <button type="button" className="btn-secondary" disabled={running} onClick={onRun}>{btnLabel}</button>
@@ -348,7 +394,8 @@ function DeepAnalysis({ result, running, onRun }: {
       <button type="button" className="btn-secondary" disabled={running} onClick={onRun}>{btnLabel}</button>
       <p className="stat-sub" style={{ marginTop: '0.375rem' }}>
         Reads the facts, your other models, and (if a search key is set) the live web, then teaches
-        the whole picture. This is the slow one; the Summary above is the quick read.
+        the whole picture. This is the slow one; the Summary above is the quick read. Save it once
+        it's generated so you don't wait again.
       </p>
     </div>
   );

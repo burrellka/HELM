@@ -32,6 +32,8 @@ class StubClient:
         self.health = health if health is not None else _fixture("health")
         self.sent: list[tuple[str, str, dict | None]] = []
         self.fail_with: UpstreamError | None = None
+        #: What /api/v1/downloads returns (the download-jobs endpoint).
+        self.downloads: list[dict] = []
 
     @property
     def has_admin_key(self) -> bool:
@@ -66,6 +68,8 @@ class StubClient:
             return _fixture("system-info")
         if path.endswith("/params"):
             return _fixture("params")
+        if path.endswith("/downloads"):
+            return self.downloads
         if path == "/live":
             return {}
         return {"ok": True}
@@ -409,3 +413,35 @@ def test_benchmark_stores_its_config_note(app_client):
                     json={"model_name": "Gemma-4-26B-A4B-it-MTP-GGUF", "scenario": "chat"})
     runs = app_client.get("/api/v1/operations/benchmarks").json()["runs"]
     assert runs and "ctx_size=524288" in runs[0]["config_note"]
+
+
+# -- download jobs: the header indicator's data source ---------------------
+
+
+def test_jobs_endpoint_normalizes_the_active_downloads(app_client):
+    """The header indicator polls this. It must return ONLY the pulls running
+    right now — a mixed list that also holds finished/failed jobs would light
+    the indicator for a download that is already over."""
+    app_client.stub.downloads = [
+        {"id": "model:user.A", "model_name": "user.A", "running": True, "complete": False,
+         "error": None, "percent": 42, "overall_bytes_downloaded": 100, "total_download_size": 240,
+         "status": "downloading"},
+        {"id": "model:user.B", "model_name": "user.B", "running": False, "complete": True,
+         "error": None, "percent": 100},                                    # finished
+        {"id": "model:user.C", "model_name": "user.C", "running": False, "complete": False,
+         "error": "429 from HuggingFace", "percent": 0, "status": "error"},  # failed
+    ]
+    r = app_client.get("/api/v1/library/jobs").json()
+    assert r["active_count"] == 1
+    active = r["active"]
+    assert [j["model_name"] for j in active] == ["user.A"]
+    assert active[0]["percent"] == 42
+    assert active[0]["bytes_downloaded"] == 100 and active[0]["bytes_total"] == 240
+    # The full list is still returned for anyone who wants it.
+    assert len(r["jobs"]) == 3
+
+
+def test_jobs_endpoint_is_empty_when_nothing_is_downloading(app_client):
+    app_client.stub.downloads = []
+    r = app_client.get("/api/v1/library/jobs").json()
+    assert r["active_count"] == 0 and r["active"] == []

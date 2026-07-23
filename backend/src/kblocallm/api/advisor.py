@@ -20,6 +20,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from ..advisor_service import (
+    SAVED_KINDS,
     SUB_MODEL_WARN_B,
     AdvisorSettingsStore,
     AdvisorSummaryStore,
@@ -371,10 +372,13 @@ class AnalyzeOut(BaseModel):
     #: Layer 3 — generated FRESH this call, clearly labeled. Null unless
     #: synthesize was asked for and the analysis model answered.
     synthesis: dict[str, Any] | None = None
-    #: A previously-SAVED summary for this model, shown instantly so the slow
-    #: generation is not repeated. Null if none saved. Carries its date and the
-    #: model that wrote it, because it is a dated snapshot, not a live read.
+    #: A previously-SAVED fast Summary for this model, shown instantly so the
+    #: slow generation is not repeated. Null if none saved. Carries its date and
+    #: the model that wrote it, because it is a dated snapshot, not a live read.
     saved_summary: dict[str, Any] | None = None
+    #: A previously-SAVED Deep analysis, same idea as saved_summary but its own
+    #: slot so saving one never clobbers the other. Null if none saved.
+    saved_deep: dict[str, Any] | None = None
 
 
 async def _model_record(client: LemonadeClient, model_id: str) -> dict | None:
@@ -563,10 +567,12 @@ async def analyze(model_id: str, request: Request, synthesize: bool = False) -> 
     if synthesize:
         synthesis = await _synthesize(request, model_id, facts, resolution, external)
 
-    saved = AdvisorSummaryStore(request.app.state.db).get(model_id)
+    store = AdvisorSummaryStore(request.app.state.db)
+    saved = store.get(model_id, kind="summary")
+    saved_deep = store.get(model_id, kind="deep")
 
     return AnalyzeOut(model_id=model_id, local_facts=facts, external=external,
-                      synthesis=synthesis, saved_summary=saved)
+                      synthesis=synthesis, saved_summary=saved, saved_deep=saved_deep)
 
 
 @router.post("/summarize/{model_id:path}")
@@ -633,22 +639,33 @@ async def summarize(model_id: str, request: Request) -> dict:
 class SaveSummaryBody(BaseModel):
     text: str
     analysis_model: str | None = None
+    #: Which saved slot: 'summary' (the fast read) or 'deep' (the slow teach).
+    #: Defaults to summary for backward compatibility with existing callers.
+    kind: str = "summary"
+
+
+def _valid_kind(kind: str) -> str:
+    if kind not in SAVED_KINDS:
+        raise HTTPException(status_code=422, detail=f"kind must be one of {SAVED_KINDS}.")
+    return kind
 
 
 @router.post("/summary/{model_id:path}")
 def save_summary(model_id: str, body: SaveSummaryBody, request: Request) -> dict:
-    """Persist a generated summary so it shows instantly next time (Kevin's
-    save/regenerate). Overwrites the prior saved one for this model."""
+    """Persist a generated write-up so it shows instantly next time. Summary and
+    Deep analysis have separate slots (body.kind), so saving one never clobbers
+    the other. Overwrites the prior saved one of the same kind."""
     if not body.text.strip():
         raise HTTPException(status_code=422, detail="Nothing to save.")
+    kind = _valid_kind(body.kind)
     store = AdvisorSummaryStore(request.app.state.db)
-    store.save(model_id, body.text, body.analysis_model)
-    return {"saved": True, **(store.get(model_id) or {})}
+    store.save(model_id, body.text, body.analysis_model, kind=kind)
+    return {"saved": True, **(store.get(model_id, kind=kind) or {})}
 
 
 @router.delete("/summary/{model_id:path}")
-def delete_summary(model_id: str, request: Request) -> dict:
-    AdvisorSummaryStore(request.app.state.db).delete(model_id)
+def delete_summary(model_id: str, request: Request, kind: str = "summary") -> dict:
+    AdvisorSummaryStore(request.app.state.db).delete(model_id, kind=_valid_kind(kind))
     return {"deleted": True}
 
 

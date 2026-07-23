@@ -287,6 +287,32 @@ _MIGRATIONS: list[tuple[int, str, str]] = [
         ALTER TABLE advisor_settings ADD COLUMN summary_prompt TEXT;
         """,
     ),
+    (
+        10,
+        "Saved advisor write-ups: keep a Summary AND a Deep analysis per model",
+        """
+        -- The saved-summary slot was one row per model, which meant Summary and
+        -- Deep analysis fought over it. The operator wants to save BOTH (the fast
+        -- read and the slow teach), so the table is rebuilt keyed by
+        -- (model_id, kind) where kind is 'summary' or 'deep'. Existing saved rows
+        -- carry forward as kind='summary' (that is what the slot held before this).
+        -- Rebuild rather than ALTER because SQLite cannot change a primary key in
+        -- place; the SELECT preserves every existing saved summary.
+        CREATE TABLE advisor_summaries_v2 (
+            model_id       TEXT NOT NULL,
+            kind           TEXT NOT NULL DEFAULT 'summary',
+            summary        TEXT NOT NULL,
+            analysis_model TEXT,
+            generated_at   TEXT NOT NULL DEFAULT (datetime('now')),
+            PRIMARY KEY (model_id, kind)
+        );
+        INSERT INTO advisor_summaries_v2 (model_id, kind, summary, analysis_model, generated_at)
+            SELECT model_id, 'summary', summary, analysis_model, generated_at
+            FROM advisor_summaries;
+        DROP TABLE advisor_summaries;
+        ALTER TABLE advisor_summaries_v2 RENAME TO advisor_summaries;
+        """,
+    ),
 ]
 
 

@@ -196,4 +196,12 @@ body {
   0%, 100% { opacity: 0.3; }
   50%      { opacity: 1; }
 }
+
+/* The header download indicator's little spinning ring. */
+.dl-spinner {
+  animation: dl-spin 0.9s linear infinite;
+}
+@keyframes dl-spin {
+  to { transform: rotate(360deg); }
+}
 .unknown-bar { background: var(--unknown-bg); }

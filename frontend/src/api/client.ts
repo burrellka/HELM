@@ -466,9 +466,12 @@ export interface AnalyzeResult {
   external: Record<string, any>;
   /** Layer 3: generated FRESH this call. Null unless synthesize was asked. */
   synthesis: Record<string, any> | null;
-  /** A previously-saved summary, shown instantly so slow generation isn't
+  /** A previously-saved fast Summary, shown instantly so slow generation isn't
    *  repeated. Null if none saved. */
   saved_summary: SavedSummary | null;
+  /** A previously-saved Deep analysis — its own slot, so it doesn't collide with
+   *  the saved Summary. Null if none saved. */
+  saved_deep: SavedSummary | null;
 }
 
 /** One event off the streaming advisor chat. `text` and `reasoning` are deltas
@@ -497,6 +500,26 @@ export interface GeneratedResult {
   label?: string;
   note?: string;
   finish_reason?: string | null;
+}
+
+/** One in-progress model download, normalized by the backend from Lemonade's
+ *  downloads endpoint. `percent` is 0-100; speed is NOT here — the client
+ *  derives it from byte deltas between polls. */
+export interface DownloadJob {
+  id: string;
+  model_name: string;
+  percent: number | null;
+  bytes_downloaded: number | null;
+  bytes_total: number | null;
+  status: string | null;
+}
+
+export interface DownloadJobs {
+  /** Every job Lemonade knows about (includes finished/failed). */
+  jobs: unknown[];
+  /** Just the ones downloading right now. */
+  active: DownloadJob[];
+  active_count: number;
 }
 
 export interface AdvisorModelOption {
@@ -612,8 +635,9 @@ export const api = {
       method: 'POST', body: JSON.stringify({ model_name, checkpoint, recipe }),
     }),
 
-  /** Server-owned jobs — this is what survives a browser refresh. */
-  pullJobs: () => request<unknown>('/library/jobs'),
+  /** Server-owned download jobs — survives a browser refresh. `active` is the
+   *  normalized "downloading right now" view the header indicator polls. */
+  pullJobs: () => request<DownloadJobs>('/library/jobs'),
 
   deleteModel: (model_name: string, confirm = false) =>
     request<{ deleted: boolean }>('/library/delete', {
@@ -693,15 +717,17 @@ export const api = {
     request<GeneratedResult>(`/advisor/summarize/${encodeURIComponent(modelId)}`, {
       method: 'POST',
     }),
-  saveSummary: (modelId: string, text: string, analysisModel: string | null) =>
+  saveSummary: (modelId: string, text: string, analysisModel: string | null,
+                kind: 'summary' | 'deep' = 'summary') =>
     request<{ saved: boolean; generated_at: string }>(
       `/advisor/summary/${encodeURIComponent(modelId)}`, {
-        method: 'POST', body: JSON.stringify({ text, analysis_model: analysisModel }),
+        method: 'POST', body: JSON.stringify({ text, analysis_model: analysisModel, kind }),
       }),
-  deleteSummary: (modelId: string) =>
-    request<{ deleted: boolean }>(`/advisor/summary/${encodeURIComponent(modelId)}`, {
-      method: 'DELETE',
-    }),
+  deleteSummary: (modelId: string, kind: 'summary' | 'deep' = 'summary') =>
+    request<{ deleted: boolean }>(
+      `/advisor/summary/${encodeURIComponent(modelId)}${qs({ kind })}`, {
+        method: 'DELETE',
+      }),
   advisorSettings: () => request<AdvisorSettings>('/advisor/settings'),
   updateAdvisorSettings: (patch: {
     analysis_model?: string; persona_prompt?: string; knowledge_primer?: string;

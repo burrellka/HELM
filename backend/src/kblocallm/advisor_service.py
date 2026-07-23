@@ -239,32 +239,40 @@ class AdvisorSettingsStore:
         return self.get()
 
 
+#: The two kinds of saved write-up a model can carry. 'summary' is the fast read
+#: (§1.10); 'deep' is the slow teaching synthesis. Each has its own saved slot so
+#: saving one never clobbers the other.
+SAVED_KINDS = ("summary", "deep")
+
+
 class AdvisorSummaryStore:
-    """Persisted generated summaries, one per model. The slow write-up is saved
-    on the operator's say-so and shown instantly on return."""
+    """Persisted generated write-ups, keyed by (model_id, kind). The slow ones
+    are saved on the operator's say-so and shown instantly on return."""
 
     def __init__(self, db: SQLiteManager) -> None:
         self._db = db
 
-    def get(self, model_id: str) -> dict | None:
+    def get(self, model_id: str, kind: str = "summary") -> dict | None:
         row = self._db.query_one(
             "SELECT summary, analysis_model, generated_at FROM advisor_summaries "
-            "WHERE model_id = ?", (model_id,))
+            "WHERE model_id = ? AND kind = ?", (model_id, kind))
         if row is None:
             return None
         return {"text": row["summary"], "analysis_model": row["analysis_model"],
-                "generated_at": row["generated_at"], "saved": True}
+                "generated_at": row["generated_at"], "kind": kind, "saved": True}
 
-    def save(self, model_id: str, summary: str, analysis_model: str | None) -> None:
+    def save(self, model_id: str, summary: str, analysis_model: str | None,
+             kind: str = "summary") -> None:
         self._db.execute(
-            "INSERT INTO advisor_summaries (model_id, summary, analysis_model, generated_at) "
-            "VALUES (?, ?, ?, datetime('now')) "
-            "ON CONFLICT(model_id) DO UPDATE SET summary = excluded.summary, "
+            "INSERT INTO advisor_summaries (model_id, kind, summary, analysis_model, generated_at) "
+            "VALUES (?, ?, ?, ?, datetime('now')) "
+            "ON CONFLICT(model_id, kind) DO UPDATE SET summary = excluded.summary, "
             "  analysis_model = excluded.analysis_model, generated_at = excluded.generated_at",
-            (model_id, summary, analysis_model))
+            (model_id, kind, summary, analysis_model))
 
-    def delete(self, model_id: str) -> None:
-        self._db.execute("DELETE FROM advisor_summaries WHERE model_id = ?", (model_id,))
+    def delete(self, model_id: str, kind: str = "summary") -> None:
+        self._db.execute(
+            "DELETE FROM advisor_summaries WHERE model_id = ? AND kind = ?", (model_id, kind))
 
 
 class HFMetadataService:

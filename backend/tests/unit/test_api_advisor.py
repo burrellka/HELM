@@ -657,6 +657,47 @@ def test_a_fresh_generation_is_separate_from_the_saved_one(client):
     assert client.post(f"/api/v1/advisor/analyze/{GEMMA}").json()["saved_summary"]["text"] == "the saved one"
 
 
+# -- Deep analysis has its OWN saved slot (QoL: save the deep write-up too) --
+
+
+def test_summary_and_deep_are_saved_in_separate_slots(client):
+    """The whole point: saving a Deep analysis must not clobber a saved Summary,
+    and vice versa. Two kinds, two slots, one model."""
+    client.post(f"/api/v1/advisor/summary/{GEMMA}", json={"text": "the fast summary", "kind": "summary"})
+    client.post(f"/api/v1/advisor/summary/{GEMMA}", json={"text": "the deep teach", "kind": "deep"})
+    r = client.post(f"/api/v1/advisor/analyze/{GEMMA}").json()
+    assert r["saved_summary"]["text"] == "the fast summary"
+    assert r["saved_deep"]["text"] == "the deep teach"
+    assert r["saved_deep"]["kind"] == "deep"
+
+
+def test_saving_a_deep_analysis_does_not_touch_the_saved_summary(client):
+    client.post(f"/api/v1/advisor/summary/{GEMMA}", json={"text": "summary stays", "kind": "summary"})
+    client.post(f"/api/v1/advisor/summary/{GEMMA}", json={"text": "deep v1", "kind": "deep"})
+    client.post(f"/api/v1/advisor/summary/{GEMMA}", json={"text": "deep v2", "kind": "deep"})  # regenerate deep
+    r = client.post(f"/api/v1/advisor/analyze/{GEMMA}").json()
+    assert r["saved_summary"]["text"] == "summary stays"      # untouched by the deep saves
+    assert r["saved_deep"]["text"] == "deep v2"               # deep overwrote its own slot only
+
+
+def test_deleting_one_kind_leaves_the_other(client):
+    client.post(f"/api/v1/advisor/summary/{GEMMA}", json={"text": "s", "kind": "summary"})
+    client.post(f"/api/v1/advisor/summary/{GEMMA}", json={"text": "d", "kind": "deep"})
+    client.delete(f"/api/v1/advisor/summary/{GEMMA}?kind=deep")
+    r = client.post(f"/api/v1/advisor/analyze/{GEMMA}").json()
+    assert r["saved_summary"]["text"] == "s"                  # still there
+    assert r["saved_deep"] is None                            # only the deep was removed
+
+
+def test_an_unknown_saved_kind_is_rejected(client):
+    r = client.post(f"/api/v1/advisor/summary/{GEMMA}", json={"text": "x", "kind": "bogus"})
+    assert r.status_code == 422
+
+
+def test_no_saved_deep_by_default(client):
+    assert client.post(f"/api/v1/advisor/analyze/{GEMMA}").json()["saved_deep"] is None
+
+
 # -- Summary (§1.10): its own model, its own starved context ----------------
 
 
