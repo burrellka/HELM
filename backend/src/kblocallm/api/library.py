@@ -322,20 +322,32 @@ async def pull(body: PullBody, request: Request) -> dict:
     """
     client = _require_admin(request)
     warnings: list[str] = []
-    if body.checkpoint and not body.model_name.startswith("user."):
-        # Only for genuinely custom pulls — a built-in by name is fine.
-        warnings.append(
-            f"Custom models should use the 'user.' namespace (e.g. user.{body.model_name}) "
-            f"to avoid colliding with Lemonade's built-in catalog."
-        )
 
+    # Lemonade's rule (verified against the box): `checkpoint`/`recipe` are ONLY
+    # accepted when the model name is `user.`-prefixed — a pull that sends them
+    # for a built-in catalog model is a hard 400. So for a built-in (the common
+    # case: the Library's Download button on a catalog row), pull BY NAME and let
+    # Lemonade resolve the checkpoint from its own catalog. Sending the
+    # catalog-provided checkpoint back to Lemonade is exactly what broke the
+    # Download button (the 400 surfaced as a 502).
+    is_custom = body.model_name.startswith("user.")
     payload: dict[str, Any] = {
         "model_name": body.model_name, "stream": True, "subscribe": False,
     }
-    if body.checkpoint:
-        payload["checkpoint"] = body.checkpoint
-    if body.recipe:
-        payload["recipe"] = body.recipe
+    if is_custom:
+        if body.checkpoint:
+            payload["checkpoint"] = body.checkpoint
+        if body.recipe:
+            payload["recipe"] = body.recipe
+    elif body.checkpoint or body.recipe:
+        # A built-in was given a checkpoint/recipe (the frontend passes the
+        # catalog checkpoint for convenience). Drop them — Lemonade owns the
+        # built-in's checkpoint — and say so rather than 400.
+        warnings.append(
+            "Pulling the built-in by name; ignored the supplied checkpoint/recipe "
+            "(Lemonade resolves those from its own catalog for built-ins). To pull "
+            "a custom model with your own checkpoint, prefix the name with 'user.'."
+        )
 
     try:
         result = await client.request(

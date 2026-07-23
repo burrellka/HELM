@@ -341,13 +341,35 @@ def test_pull_is_server_owned_so_it_survives_a_refresh(app_client):
     assert sent[2]["stream"] is True and sent[2]["subscribe"] is False
 
 
-def test_pull_warns_about_the_user_namespace_without_rewriting_it(app_client):
-    r = app_client.post("/api/v1/library/pull",
-                        json={"model_name": "MyModel", "checkpoint": "org/repo:Q4"})
-    assert "user." in r.json()["warnings"][0]
-    # Not silently renamed — that would be its own surprise.
+def test_a_user_prefixed_pull_keeps_its_checkpoint_and_recipe(app_client):
+    """Custom pulls are the ONLY case Lemonade accepts a checkpoint/recipe."""
+    app_client.post("/api/v1/library/pull",
+                    json={"model_name": "user.Thing", "checkpoint": "org/repo:Q4",
+                          "recipe": "llamacpp"})
     sent = next(s for s in app_client.stub.sent if s[1] == "/api/v1/pull")
-    assert sent[2]["model_name"] == "MyModel"
+    assert sent[2]["checkpoint"] == "org/repo:Q4" and sent[2]["recipe"] == "llamacpp"
+
+
+def test_a_builtin_pull_drops_the_checkpoint_so_lemonade_does_not_400(app_client):
+    """The Download-button bug: Lemonade hard-400s a pull that sends a checkpoint
+    for a non-user. model. HELM pulls the built-in BY NAME (Lemonade resolves the
+    checkpoint from its own catalog) and warns instead of forwarding the 400 as a
+    502. The frontend passes the catalog checkpoint for convenience; the backend
+    strips it here."""
+    r = app_client.post("/api/v1/library/pull",
+                        json={"model_name": "Bonsai-4B-gguf", "checkpoint": "org/repo:Q1_0"})
+    assert r.status_code == 200
+    sent = next(s for s in app_client.stub.sent if s[1] == "/api/v1/pull")
+    assert sent[2]["model_name"] == "Bonsai-4B-gguf"     # not rewritten
+    assert "checkpoint" not in sent[2]                    # dropped, not forwarded
+    assert "recipe" not in sent[2]
+    assert r.json()["warnings"]                            # said what it did
+
+
+def test_a_plain_builtin_pull_sends_only_the_name(app_client):
+    app_client.post("/api/v1/library/pull", json={"model_name": "Bonsai-1.7B-gguf"})
+    sent = next(s for s in app_client.stub.sent if s[1] == "/api/v1/pull")
+    assert sent[2] == {"model_name": "Bonsai-1.7B-gguf", "stream": True, "subscribe": False}
 
 
 def test_the_library_never_leaks_host_paths_by_default(app_client):
