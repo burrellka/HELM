@@ -275,6 +275,28 @@ class AdvisorSummaryStore:
             "DELETE FROM advisor_summaries WHERE model_id = ? AND kind = ?", (model_id, kind))
 
 
+class ModelSourceStore:
+    """Remembers the HuggingFace checkpoint a model was pulled from (migration
+    11). Lemonade reports a local file path post-download; this keeps the origin
+    so the advisor's external-metadata lookup can resolve the real repo."""
+
+    def __init__(self, db: SQLiteManager) -> None:
+        self._db = db
+
+    def get(self, model_id: str) -> str | None:
+        row = self._db.query_one(
+            "SELECT checkpoint FROM model_source WHERE model_id = ?", (model_id,))
+        return row["checkpoint"] if row else None
+
+    def set(self, model_id: str, checkpoint: str, recipe: str | None = None) -> None:
+        self._db.execute(
+            "INSERT INTO model_source (model_id, checkpoint, recipe, recorded_at) "
+            "VALUES (?, ?, ?, datetime('now')) "
+            "ON CONFLICT(model_id) DO UPDATE SET checkpoint = excluded.checkpoint, "
+            "  recipe = excluded.recipe, recorded_at = excluded.recorded_at",
+            (model_id, checkpoint, recipe))
+
+
 class HFMetadataService:
     """Layer 2. Server-side, cached, rate-limited, honest about absence."""
 

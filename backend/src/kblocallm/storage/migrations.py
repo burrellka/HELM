@@ -313,6 +313,27 @@ _MIGRATIONS: list[tuple[int, str, str]] = [
         ALTER TABLE advisor_summaries_v2 RENAME TO advisor_summaries;
         """,
     ),
+    (
+        11,
+        "Remember the HuggingFace checkpoint a model was pulled from",
+        """
+        -- After a download, Lemonade often reports the checkpoint as the on-disk
+        -- FILE PATH, not the HuggingFace repo it came from — so the advisor's
+        -- external-metadata lookup sees a local path and honestly says "no
+        -- external record", even for a model that plainly came from HF. When a
+        -- pull goes through HELM we DO know the origin (the operator/catalog
+        -- supplied it), so we remember it here, keyed by model id, and use it as
+        -- the repo source when Lemonade's own checkpoint no longer resolves.
+        -- Forward-only: models pulled before this (or via Lemonade directly)
+        -- aren't recorded, and that's fine — HELM never invents an origin.
+        CREATE TABLE IF NOT EXISTS model_source (
+            model_id     TEXT PRIMARY KEY,
+            checkpoint   TEXT NOT NULL,
+            recipe       TEXT,
+            recorded_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        """,
+    ),
 ]
 
 

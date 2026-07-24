@@ -115,7 +115,7 @@ function Header({ config, onLogout }: { config: SystemConfig | null; onLogout: (
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.625rem' }}>
           <span style={{ fontWeight: 700, fontSize: '1.0625rem' }}>HELM</span>
-          <span className="stat-sub">AI fleet control plane</span>
+          <span className="stat-sub">Homelab Engine for Local Models — a control plane for Lemonade</span>
           {config && <span className="stat-sub mono">v{config.version}</span>}
         </div>
         <DownloadIndicator />

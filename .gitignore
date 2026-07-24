@@ -34,3 +34,4 @@ tsconfig.tsbuildinfo
 # candid in-progress notes that aren't meant for the public repo.
 DEV_NOTES.md
 STATUS_FOR_ARCHITECT.md
+PER_MODEL_DETAIL_PROPOSAL.md

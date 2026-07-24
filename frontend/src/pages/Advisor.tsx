@@ -160,12 +160,27 @@ function AdvisorChat({ modelId }: { modelId: string }) {
         <div ref={bottom} />
       </div>
       {error && <Callout tone="bad">{error}</Callout>}
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-        <input value={input} placeholder="Ask about this model…"
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'flex-end' }}>
+        {/* Height tracks the number of lines the operator has typed (grows 1→6
+            rows on Shift+Enter / multi-line paste, then scrolls). Deterministic
+            and width-independent — the measurement-based approaches (scrollHeight,
+            field-sizing) broke against this flex layout. A short placeholder so
+            an empty box stays one line. */}
+        <textarea
+          value={input}
+          placeholder="Ask about this model…"
+          rows={Math.min(6, Math.max(1, input.split('\n').length))}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') void send(); }}
-          style={{ flex: 1, fontFamily: 'inherit', fontSize: '0.875rem', padding: '0.5rem',
-            border: '1px solid var(--border-strong)', borderRadius: 8 }} />
+          onKeyDown={(e) => {
+            // Enter sends; Shift+Enter (or a newline paste) adds a line.
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(); }
+          }}
+          style={{
+            flex: 1, fontFamily: 'inherit', fontSize: '0.875rem', padding: '0.5rem',
+            border: '1px solid var(--border-strong)', borderRadius: 8,
+            resize: 'none', overflowY: 'auto', lineHeight: 1.4,
+          }}
+        />
         <button type="button" className="btn-primary" disabled={busy || !input.trim()}
           onClick={() => void send()}>Send</button>
       </div>

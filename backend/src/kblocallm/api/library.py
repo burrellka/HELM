@@ -356,6 +356,14 @@ async def pull(body: PullBody, request: Request) -> dict:
     except UpstreamError as e:
         raise HTTPException(status_code=502, detail={"kind": e.kind, "detail": str(e)})
 
+    # Remember where this model came from. Lemonade will report a local file path
+    # for it after the download, losing the HF origin; recording the pull-time
+    # checkpoint lets the advisor still resolve the real repo (migration 11).
+    if body.checkpoint:
+        from ..advisor_service import ModelSourceStore
+        ModelSourceStore(request.app.state.db).set(
+            body.model_name, body.checkpoint, body.recipe)
+
     _cache(request).invalidate()
     return {"started": True, "result": result, "warnings": warnings}
 

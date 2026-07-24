@@ -546,6 +546,17 @@ async def analyze(model_id: str, request: Request, synthesize: bool = False) -> 
 
     # Layer 2: resolve then fetch. Never guess a repo (§1.8).
     resolution = resolve_repo(record.get("checkpoint"), model_id)
+    if not (resolution.confidence is RepoConfidence.EXPLICIT and resolution.repo_id):
+        # Lemonade reports a local file path for a downloaded model, losing the
+        # HF origin. If HELM pulled it and remembered the source checkpoint
+        # (migration 11), resolve from THAT instead — still an explicit,
+        # operator-provided repo, never a guess.
+        from ..advisor_service import ModelSourceStore
+        remembered = ModelSourceStore(request.app.state.db).get(model_id)
+        if remembered:
+            alt = resolve_repo(remembered, model_id)
+            if alt.confidence is RepoConfidence.EXPLICIT and alt.repo_id:
+                resolution = alt
     if resolution.confidence is RepoConfidence.EXPLICIT and resolution.repo_id:
         hf = await HFMetadataService(request.app.state.db).fetch(resolution.repo_id)
         external = {

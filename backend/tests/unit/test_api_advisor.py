@@ -146,6 +146,26 @@ def test_an_explicit_repo_is_resolved_and_fetched(client):
     assert external["metadata"] is None
 
 
+def test_a_remembered_pull_checkpoint_restores_the_repo(client):
+    """When Lemonade only has a local path (as it does for Aevum), but HELM
+    remembered the HF checkpoint from the pull, the advisor resolves from THAT —
+    still an explicit operator-provided repo, never a guess. This is the fix for
+    'everything I download shows no external record'."""
+    from kblocallm.advisor_service import ModelSourceStore
+    ModelSourceStore(client.app.state.db).set(AEVUM, "someorg/aevum-gguf:Q4_K_M")
+    external = client.post(f"/api/v1/advisor/analyze/{AEVUM}").json()["external"]
+    # It now resolves the repo (and honestly reports the stubbed not_found),
+    # instead of "no external record".
+    assert external["repo_id"] == "someorg/aevum-gguf"
+    assert external["status"] == "not_found"
+
+
+def test_without_a_remembered_checkpoint_a_local_path_still_says_no_record(client):
+    """No invention: a local-path model with nothing remembered stays honest."""
+    external = client.post(f"/api/v1/advisor/analyze/{AEVUM}").json()["external"]
+    assert external["repo_id"] is None and external["status"] == "no_external_record"
+
+
 # -- Layer 3: labeled, never fabricated on failure -------------------------
 
 
