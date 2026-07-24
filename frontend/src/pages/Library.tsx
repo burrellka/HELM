@@ -76,6 +76,7 @@ export default function Library({ managementEnabled, focusModelId }: {
   const [loading, setLoading] = useState<LibraryEntry | null>(null);
   const [rawConfig, setRawConfig] = useState<LibraryEntry | null>(null);
   const [analyzing, setAnalyzing] = useState<LibraryEntry | null>(null);
+  const [updating, setUpdating] = useState<LibraryEntry | null>(null);
   /** Which side of the drift the editor opens on: what's running, or what's saved. */
   const [prefillSide, setPrefillSide] = useState<'running' | 'saved'>('running');
 
@@ -129,6 +130,7 @@ export default function Library({ managementEnabled, focusModelId }: {
             onRevert={(entry) => { setPrefillSide('saved'); setLoading(entry); }}
             onRawConfig={() => setRawConfig(e)}
             onAnalyze={() => setAnalyzing(e)}
+            onUpdate={() => setUpdating(e)}
             onChanged={refresh}
           />
         ))}
@@ -161,6 +163,13 @@ export default function Library({ managementEnabled, focusModelId }: {
         <Modal title={`Analyze — ${analyzing.model_id}`} onClose={() => setAnalyzing(null)}>
           <AnalyzePanel modelId={analyzing.model_id} />
         </Modal>
+      )}
+      {updating && (
+        <UpdateDialog
+          entry={updating}
+          onClose={() => setUpdating(null)}
+          onStarted={() => { setUpdating(null); void refresh(); }}
+        />
       )}
     </div>
   );
@@ -263,11 +272,11 @@ function Chip({ on, onClick, children }: {
   );
 }
 
-function EntryCard({ entry, managementEnabled, onEdit, onLoad, onRevert, onRawConfig, onAnalyze, onChanged }: {
+function EntryCard({ entry, managementEnabled, onEdit, onLoad, onRevert, onRawConfig, onAnalyze, onUpdate, onChanged }: {
   entry: LibraryEntry; managementEnabled: boolean;
   onEdit: () => void; onLoad: () => void;
   onRevert: (entry: LibraryEntry) => void; onRawConfig: () => void;
-  onAnalyze: () => void; onChanged: () => void;
+  onAnalyze: () => void; onUpdate: () => void; onChanged: () => void;
 }) {
   const [busy, setBusy] = useState(false);
 
@@ -336,6 +345,12 @@ function EntryCard({ entry, managementEnabled, onEdit, onLoad, onRevert, onRawCo
             title="What is this model: quant, fit, capabilities, and a grounded summary.">
             Analyze
           </button>
+          {managementEnabled && entry.downloaded && entry.update_available && (
+            <button type="button" className="btn-primary" onClick={onUpdate}
+              title="Lemonade found a newer version of this model on its HuggingFace source. Review and re-download.">
+              Update
+            </button>
+          )}
           <button type="button" className="btn-secondary" onClick={onEdit}>Notes &amp; tags</button>
           {/* The §5.3 editor. Available whether or not the model is resident:
               for a loaded model it reloads with the new options, for an
@@ -506,6 +521,111 @@ function SettingsPanel({ drift, onRevert, canWrite }: {
         </button>
       )}
     </details>
+  );
+}
+
+/**
+ * The Update flow. Lemonade flags `update_available` when a model's HuggingFace
+ * source has a newer version than the local copy. There is no dedicated Lemonade
+ * update call — updating IS a fresh pull by name, which fetches the latest. So
+ * this dialog shows what we can learn about the source (repo, when it last
+ * changed, popularity — from the same cached HF metadata the advisor uses), is
+ * honest about what updating does and costs, and on confirm re-pulls. Progress
+ * then shows in the header download indicator.
+ */
+function UpdateDialog({ entry, onClose, onStarted }: {
+  entry: LibraryEntry; onClose: () => void; onStarted: () => void;
+}) {
+  const [external, setExternal] = useState<Record<string, any> | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Reuse Analyze's Layer 2 (cached HF metadata) to show the source — no new
+    // endpoint, and it's honest about absence.
+    api.analyze(entry.model_id, false)
+      .then((r) => setExternal(r.external))
+      .catch(() => setExternal(null));
+  }, [entry.model_id]);
+
+  const doUpdate = async () => {
+    setBusy(true); setError(null);
+    try {
+      // A built-in updates by pulling its own name — Lemonade fetches the latest
+      // from its catalog source. No checkpoint (the backend would reject it for a
+      // non-user. name, and Lemonade owns the built-in's source anyway).
+      await api.pull(entry.model_id);
+      onStarted();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setBusy(false);
+    }
+  };
+
+  const meta = external?.status === 'found' ? external.metadata : null;
+  const lastModified = meta?.last_modified
+    ? new Date(meta.last_modified).toLocaleDateString() : null;
+
+  return (
+    <Modal
+      title={`Update — ${entry.model_id}`}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn-primary" disabled={busy} onClick={() => void doUpdate()}>
+            {busy ? 'Starting…' : 'Download the update'}
+          </button>
+        </>
+      }
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+        <Callout tone="warn" title="A newer version is available">
+          Lemonade found that this model's source has been updated since your copy was downloaded.
+          Updating re-downloads the latest version{entry.size ? ` (about ${formatBytes(entry.size)})` : ''}.
+        </Callout>
+
+        <div>
+          <div className="stat-sub">Source</div>
+          <div className="mono" style={{ fontSize: '0.8125rem', wordBreak: 'break-all' }}>
+            {entry.checkpoint || (external?.repo_id ?? 'unknown')}
+          </div>
+        </div>
+
+        {meta ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
+            {lastModified && <Fact label="Source updated" value={lastModified} />}
+            {meta.downloads != null && <Fact label="Downloads" value={meta.downloads.toLocaleString()} />}
+            {meta.likes != null && <Fact label="Likes" value={meta.likes} />}
+            {meta.license && <Fact label="License" value={meta.license} />}
+          </div>
+        ) : (
+          <p className="stat-sub" style={{ margin: 0 }}>
+            {external
+              ? 'No external record for this model, so there is no changelog to show — Lemonade only reports that a newer version exists.'
+              : 'Reading the source details…'}
+          </p>
+        )}
+
+        <p className="stat-sub" style={{ margin: 0 }}>
+          The download runs on the server and shows in the indicator at the top. If this model is
+          loaded, the running copy keeps serving the old version until you reload it (Settings →
+          apply, or unload and load) after the download finishes.
+        </p>
+
+        {error && <Callout tone="bad" title="Update could not start">{error}</Callout>}
+      </div>
+    </Modal>
+  );
+}
+
+/** A small labelled fact, matching the Analyze panel's style. */
+function Fact({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <div className="stat-sub">{label}</div>
+      <div style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{value}</div>
+    </div>
   );
 }
 
