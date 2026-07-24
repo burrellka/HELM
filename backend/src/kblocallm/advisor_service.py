@@ -338,6 +338,58 @@ class HFMetadataService:
         self._write_cache(repo_id, "found", payload)
         return HFResult("found", payload, cached=False)
 
+    #: The model card can be long; keep the operator preview generous but bounded
+    #: so a pathological README cannot blow the response or the DB row.
+    _CARD_MAX_CHARS = 24_000
+
+    async def fetch_card(self, repo_id: str, *, force: bool = False) -> str | None:
+        """The model card README, for the download/update preview. Returns the
+        frontmatter-stripped, size-bounded markdown, or None when there is no
+        card (or HF is unreachable). Cached by repo id with the same TTL as the
+        metadata, so re-opening the dialog does not re-hit HuggingFace."""
+        if not force:
+            cached = self._read_card_cache(repo_id)
+            if cached is not None:
+                return cached or None   # '' cached = fetched, no card
+
+        elapsed = time.monotonic() - self._last_fetch
+        if elapsed < _MIN_FETCH_INTERVAL_S:
+            time.sleep(_MIN_FETCH_INTERVAL_S - elapsed)
+        self._last_fetch = time.monotonic()
+
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(10.0), follow_redirects=True) as client:
+                resp = await client.get(
+                    f"https://huggingface.co/{repo_id}/raw/main/README.md",
+                    headers={"User-Agent": "HELM-control-plane"},
+                )
+        except httpx.HTTPError:
+            return None   # transient: do not cache a failure as "no card"
+
+        if resp.status_code != 200:
+            self._write_card_cache(repo_id, "")   # genuinely no card at this repo
+            return None
+
+        card = _clean_card(resp.text)[: self._CARD_MAX_CHARS]
+        self._write_card_cache(repo_id, card)
+        return card or None
+
+    def _read_card_cache(self, repo_id: str) -> str | None:
+        row = self._db.query_one(
+            "SELECT card, (julianday('now') - julianday(fetched_at)) * 86400 AS age_s "
+            "FROM hf_card_cache WHERE repo_id = ?", (repo_id,))
+        if row is None or row["age_s"] > HF_CACHE_TTL_SECONDS:
+            return None
+        return row["card"]
+
+    def _write_card_cache(self, repo_id: str, card: str) -> None:
+        self._db.execute(
+            "INSERT INTO hf_card_cache (repo_id, card, fetched_at) "
+            "VALUES (?, ?, datetime('now')) "
+            "ON CONFLICT(repo_id) DO UPDATE SET card = excluded.card, "
+            "  fetched_at = excluded.fetched_at",
+            (repo_id, card))
+
     def _read_cache(self, repo_id: str) -> HFResult | None:
         row = self._db.query_one(
             "SELECT status, payload, fetched_at, "
@@ -354,6 +406,36 @@ class HFMetadataService:
             "ON CONFLICT(repo_id) DO UPDATE SET status = excluded.status, "
             "  payload = excluded.payload, fetched_at = excluded.fetched_at",
             (repo_id, status, json.dumps(payload)))
+
+
+def _strip_frontmatter(text: str) -> str:
+    """Drop the leading YAML frontmatter block (the `---`…`---` header) from a
+    model card so the operator sees the prose, not the license/tags YAML they
+    already have as structured fields."""
+    t = text.lstrip("﻿").lstrip()
+    if t.startswith("---"):
+        end = t.find("\n---", 3)
+        if end != -1:
+            nl = t.find("\n", end + 1)
+            t = t[nl + 1:] if nl != -1 else ""
+    return t.strip()
+
+
+def _clean_card(text: str) -> str:
+    """Prepare a model card README for HELM's markdown preview. Strips the YAML
+    frontmatter, then removes raw HTML — model cards freely mix HTML (badge
+    divs, styled paragraphs) into their markdown, and HELM's renderer is
+    markdown-only and (by design) never renders HTML. So rather than show the
+    operator literal `<div style=…>` noise, we drop the tags and keep their text.
+    The markdown structure (headings, tables, lists, code) still renders."""
+    import re
+
+    t = _strip_frontmatter(text)
+    t = re.sub(r"<br\s*/?>", "\n", t, flags=re.IGNORECASE)   # line breaks survive
+    t = re.sub(r"<!--.*?-->", "", t, flags=re.DOTALL)        # HTML comments
+    t = re.sub(r"<[^>\n]{1,200}>", "", t)                     # tags -> gone, text kept
+    t = re.sub(r"\n{3,}", "\n\n", t)                          # collapse the gaps left behind
+    return t.strip()
 
 
 def _distill(raw: dict[str, Any]) -> dict[str, Any]:

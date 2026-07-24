@@ -19,7 +19,9 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
+from ..advisor_service import HFMetadataService, ModelSourceStore
 from ..domain.drift import DriftReport
+from ..domain.hf_resolve import RepoConfidence, resolve_repo
 from ..domain.library import LabelJoin, build_library, search, unmatched_loaded_models
 from ..storage.metadata import MetadataStore
 from ..upstream.client import CONTROL, FAST, TRANSFER, LemonadeClient, UpstreamError
@@ -402,6 +404,48 @@ async def jobs(request: Request) -> dict:
         if isinstance(j, dict) and j.get("running") and not j.get("complete") and not j.get("error")
     ]
     return {"jobs": jobs_list, "active": active, "active_count": len(active)}
+
+
+@router.get("/card/{model_id:path}")
+async def model_card(model_id: str, request: Request) -> dict:
+    """The HuggingFace model card (README) for the download/update preview, so the
+    operator can see what a model IS before pulling gigabytes of it.
+
+    HF's JSON metadata carries no usable description; the card README does. We
+    resolve the repo the same way Analyze does — from the catalog checkpoint, or
+    the checkpoint HELM remembered at pull time when Lemonade now reports a local
+    path — then fetch and cache the card. Honest about absence: a custom/local
+    model with no HF repo returns no card, not an invented one.
+    """
+    client: LemonadeClient = request.app.state.lemonade
+    # Find the model's checkpoint from the catalog.
+    checkpoint = None
+    try:
+        payload = await client.request(
+            "GET", "/api/v1/models", params={"show_all": "true"}, timeout=FAST)
+        for m in payload.get("data", []):
+            if isinstance(m, dict) and m.get("id") == model_id:
+                checkpoint = m.get("checkpoint")
+                break
+    except UpstreamError:
+        pass
+
+    resolution = resolve_repo(checkpoint, model_id)
+    if not (resolution.confidence is RepoConfidence.EXPLICIT and resolution.repo_id):
+        remembered = ModelSourceStore(request.app.state.db).get(model_id)
+        if remembered:
+            resolution = resolve_repo(remembered, model_id)
+    if not (resolution.confidence is RepoConfidence.EXPLICIT and resolution.repo_id):
+        return {"repo_id": None, "card": None,
+                "note": "No HuggingFace repo for this model, so there is no card to show "
+                        "(a custom or local-file model)."}
+
+    card = await HFMetadataService(request.app.state.db).fetch_card(resolution.repo_id)
+    return {
+        "repo_id": resolution.repo_id,
+        "card": card,
+        "note": None if card else "HuggingFace has no README card for this repo.",
+    }
 
 
 class DeleteBody(BaseModel):

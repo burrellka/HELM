@@ -639,6 +639,13 @@ export const api = {
    *  normalized "downloading right now" view the header indicator polls. */
   pullJobs: () => request<DownloadJobs>('/library/jobs'),
 
+  /** The HuggingFace model card (README) for a model, so the operator can see
+   *  what it is before downloading/updating. `card` is null when there's no HF
+   *  repo (a custom/local model) — never an invented one. */
+  modelCard: (modelId: string) =>
+    request<{ repo_id: string | null; card: string | null; note: string | null }>(
+      `/library/card/${encodeURIComponent(modelId)}`),
+
   deleteModel: (model_name: string, confirm = false) =>
     request<{ deleted: boolean }>('/library/delete', {
       method: 'POST', body: JSON.stringify({ model_name, confirm }),

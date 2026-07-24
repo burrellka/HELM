@@ -31,6 +31,7 @@ import { Badge, Callout, ConfirmButton, Modal, Unknown, formatBytes } from '../c
 import LoadDialog, { type LoadPrefill } from '../components/LoadDialog';
 import RawConfigDialog from '../components/RawConfigDialog';
 import AnalyzePanel from '../components/AnalyzePanel';
+import Markdown from '../components/Markdown';
 
 /**
  * Prefill the editor from a side the SERVER already derived.
@@ -76,7 +77,7 @@ export default function Library({ managementEnabled, focusModelId }: {
   const [loading, setLoading] = useState<LibraryEntry | null>(null);
   const [rawConfig, setRawConfig] = useState<LibraryEntry | null>(null);
   const [analyzing, setAnalyzing] = useState<LibraryEntry | null>(null);
-  const [updating, setUpdating] = useState<LibraryEntry | null>(null);
+  const [pulling, setPulling] = useState<{ entry: LibraryEntry; mode: 'download' | 'update' } | null>(null);
   /** Which side of the drift the editor opens on: what's running, or what's saved. */
   const [prefillSide, setPrefillSide] = useState<'running' | 'saved'>('running');
 
@@ -130,7 +131,7 @@ export default function Library({ managementEnabled, focusModelId }: {
             onRevert={(entry) => { setPrefillSide('saved'); setLoading(entry); }}
             onRawConfig={() => setRawConfig(e)}
             onAnalyze={() => setAnalyzing(e)}
-            onUpdate={() => setUpdating(e)}
+            onPull={(mode) => setPulling({ entry: e, mode })}
             onChanged={refresh}
           />
         ))}
@@ -164,11 +165,12 @@ export default function Library({ managementEnabled, focusModelId }: {
           <AnalyzePanel modelId={analyzing.model_id} />
         </Modal>
       )}
-      {updating && (
-        <UpdateDialog
-          entry={updating}
-          onClose={() => setUpdating(null)}
-          onStarted={() => { setUpdating(null); void refresh(); }}
+      {pulling && (
+        <PullDialog
+          entry={pulling.entry}
+          mode={pulling.mode}
+          onClose={() => setPulling(null)}
+          onStarted={() => { setPulling(null); void refresh(); }}
         />
       )}
     </div>
@@ -272,11 +274,11 @@ function Chip({ on, onClick, children }: {
   );
 }
 
-function EntryCard({ entry, managementEnabled, onEdit, onLoad, onRevert, onRawConfig, onAnalyze, onUpdate, onChanged }: {
+function EntryCard({ entry, managementEnabled, onEdit, onLoad, onRevert, onRawConfig, onAnalyze, onPull, onChanged }: {
   entry: LibraryEntry; managementEnabled: boolean;
   onEdit: () => void; onLoad: () => void;
   onRevert: (entry: LibraryEntry) => void; onRawConfig: () => void;
-  onAnalyze: () => void; onUpdate: () => void; onChanged: () => void;
+  onAnalyze: () => void; onPull: (mode: 'download' | 'update') => void; onChanged: () => void;
 }) {
   const [busy, setBusy] = useState(false);
 
@@ -346,7 +348,7 @@ function EntryCard({ entry, managementEnabled, onEdit, onLoad, onRevert, onRawCo
             Analyze
           </button>
           {managementEnabled && entry.downloaded && entry.update_available && (
-            <button type="button" className="btn-primary" onClick={onUpdate}
+            <button type="button" className="btn-primary" onClick={() => onPull('update')}
               title="Lemonade found a newer version of this model on its HuggingFace source. Review and re-download.">
               Update
             </button>
@@ -379,11 +381,8 @@ function EntryCard({ entry, managementEnabled, onEdit, onLoad, onRevert, onRawCo
             />
           )}
           {!entry.downloaded && managementEnabled && (
-            <button
-              type="button" className="btn-secondary"
-              onClick={async () => { await api.pull(entry.model_id, entry.checkpoint ?? undefined,
-                entry.recipe ?? undefined); onChanged(); }}
-            >Download</button>
+            <button type="button" className="btn-primary" onClick={() => onPull('download')}
+              title="See the model card and details, then download.">Download</button>
           )}
         </div>
       </div>
@@ -525,36 +524,41 @@ function SettingsPanel({ drift, onRevert, canWrite }: {
 }
 
 /**
- * The Update flow. Lemonade flags `update_available` when a model's HuggingFace
- * source has a newer version than the local copy. There is no dedicated Lemonade
- * update call — updating IS a fresh pull by name, which fetches the latest. So
- * this dialog shows what we can learn about the source (repo, when it last
- * changed, popularity — from the same cached HF metadata the advisor uses), is
- * honest about what updating does and costs, and on confirm re-pulls. Progress
- * then shows in the header download indicator.
+ * The download / update preview. The operator should never pull gigabytes blind:
+ * this shows the model's HuggingFace source (repo, when it last changed,
+ * popularity, license — the cached metadata the advisor uses) AND the actual
+ * model card (the README), so they can read what they're getting first. Then it
+ * pulls. Progress shows in the header download indicator.
+ *
+ * `update` mode adds the "newer version available" framing and pulls by name
+ * (a built-in updates by re-pulling its own name — there is no separate Lemonade
+ * update call). `download` mode passes the catalog checkpoint/recipe for a
+ * not-yet-downloaded model (the backend keeps them only for user. custom pulls).
  */
-function UpdateDialog({ entry, onClose, onStarted }: {
-  entry: LibraryEntry; onClose: () => void; onStarted: () => void;
+function PullDialog({ entry, mode, onClose, onStarted }: {
+  entry: LibraryEntry; mode: 'download' | 'update';
+  onClose: () => void; onStarted: () => void;
 }) {
   const [external, setExternal] = useState<Record<string, any> | null>(null);
+  const [card, setCard] = useState<{ card: string | null; note: string | null } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Reuse Analyze's Layer 2 (cached HF metadata) to show the source — no new
-    // endpoint, and it's honest about absence.
-    api.analyze(entry.model_id, false)
-      .then((r) => setExternal(r.external))
-      .catch(() => setExternal(null));
+    // Cached HF metadata (source, popularity) + the model card (README). Both
+    // are honest about absence for a custom/local model.
+    api.analyze(entry.model_id, false).then((r) => setExternal(r.external)).catch(() => setExternal(null));
+    api.modelCard(entry.model_id).then(setCard).catch(() => setCard({ card: null, note: 'Could not load the model card.' }));
   }, [entry.model_id]);
 
-  const doUpdate = async () => {
+  const doPull = async () => {
     setBusy(true); setError(null);
     try {
-      // A built-in updates by pulling its own name — Lemonade fetches the latest
-      // from its catalog source. No checkpoint (the backend would reject it for a
-      // non-user. name, and Lemonade owns the built-in's source anyway).
-      await api.pull(entry.model_id);
+      if (mode === 'update') {
+        await api.pull(entry.model_id);   // built-in re-pull by name → latest
+      } else {
+        await api.pull(entry.model_id, entry.checkpoint ?? undefined, entry.recipe ?? undefined);
+      }
       onStarted();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -563,57 +567,77 @@ function UpdateDialog({ entry, onClose, onStarted }: {
   };
 
   const meta = external?.status === 'found' ? external.metadata : null;
-  const lastModified = meta?.last_modified
-    ? new Date(meta.last_modified).toLocaleDateString() : null;
+  const lastModified = meta?.last_modified ? new Date(meta.last_modified).toLocaleDateString() : null;
+  const verb = mode === 'update' ? 'Download the update' : 'Download';
 
   return (
     <Modal
-      title={`Update — ${entry.model_id}`}
+      title={`${mode === 'update' ? 'Update' : 'Download'} — ${entry.model_id}`}
       onClose={onClose}
       footer={
         <>
           <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-          <button type="button" className="btn-primary" disabled={busy} onClick={() => void doUpdate()}>
-            {busy ? 'Starting…' : 'Download the update'}
+          <button type="button" className="btn-primary" disabled={busy} onClick={() => void doPull()}>
+            {busy ? 'Starting…' : verb}
           </button>
         </>
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-        <Callout tone="warn" title="A newer version is available">
-          Lemonade found that this model's source has been updated since your copy was downloaded.
-          Updating re-downloads the latest version{entry.size ? ` (about ${formatBytes(entry.size)})` : ''}.
-        </Callout>
+        {mode === 'update' ? (
+          <Callout tone="warn" title="A newer version is available">
+            Lemonade found that this model's source has been updated since your copy was downloaded.
+            Updating re-downloads the latest version{entry.size ? ` (about ${formatBytes(entry.size)})` : ''}.
+          </Callout>
+        ) : (
+          <Callout tone="info" title="Review before downloading">
+            The model card below is from HuggingFace. Read what this model is and how it's meant to be
+            run before pulling it{entry.size ? ` (about ${formatBytes(entry.size)})` : ''}.
+          </Callout>
+        )}
 
         <div>
           <div className="stat-sub">Source</div>
           <div className="mono" style={{ fontSize: '0.8125rem', wordBreak: 'break-all' }}>
-            {entry.checkpoint || (external?.repo_id ?? 'unknown')}
+            {entry.checkpoint || external?.repo_id || 'unknown'}
           </div>
         </div>
 
-        {meta ? (
+        {meta && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
             {lastModified && <Fact label="Source updated" value={lastModified} />}
             {meta.downloads != null && <Fact label="Downloads" value={meta.downloads.toLocaleString()} />}
             {meta.likes != null && <Fact label="Likes" value={meta.likes} />}
             {meta.license && <Fact label="License" value={meta.license} />}
           </div>
-        ) : (
-          <p className="stat-sub" style={{ margin: 0 }}>
-            {external
-              ? 'No external record for this model, so there is no changelog to show — Lemonade only reports that a newer version exists.'
-              : 'Reading the source details…'}
-          </p>
         )}
 
+        {/* The model card. The one thing that tells the operator what they're
+            getting. Scrolls in its own box so a long card doesn't run away. */}
+        <div>
+          <div className="stat-sub" style={{ marginBottom: '0.375rem' }}>Model card (HuggingFace README)</div>
+          {card === null ? (
+            <p className="stat-sub" style={{ margin: 0 }}>Loading the model card…</p>
+          ) : card.card ? (
+            <div style={{
+              maxHeight: '42vh', overflowY: 'auto', padding: '0.75rem 0.875rem',
+              background: 'var(--bg-subtle)', border: '1px solid var(--border-color)', borderRadius: 8,
+            }}>
+              <Markdown>{card.card}</Markdown>
+            </div>
+          ) : (
+            <Callout tone="info">{card.note ?? 'No model card available for this model.'}</Callout>
+          )}
+        </div>
+
         <p className="stat-sub" style={{ margin: 0 }}>
-          The download runs on the server and shows in the indicator at the top. If this model is
-          loaded, the running copy keeps serving the old version until you reload it (Settings →
-          apply, or unload and load) after the download finishes.
+          The download runs on the server and shows in the indicator at the top.
+          {mode === 'update' && entry.loaded
+            ? ' This model is loaded — the running copy keeps serving the old version until you reload it (Settings → apply, or unload and load) after the download finishes.'
+            : ''}
         </p>
 
-        {error && <Callout tone="bad" title="Update could not start">{error}</Callout>}
+        {error && <Callout tone="bad" title={`${mode === 'update' ? 'Update' : 'Download'} could not start`}>{error}</Callout>}
       </div>
     </Modal>
   );

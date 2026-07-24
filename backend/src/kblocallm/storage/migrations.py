@@ -334,6 +334,23 @@ _MIGRATIONS: list[tuple[int, str, str]] = [
         );
         """,
     ),
+    (
+        12,
+        "Cache HuggingFace model cards (the README) for the download/update view",
+        """
+        -- The operator should see what a model IS before downloading or updating
+        -- it. HuggingFace's JSON metadata carries no usable description, but the
+        -- model card README does — so HELM fetches that and shows it. Cached by
+        -- repo id alongside the metadata cache, same TTL logic, so opening the
+        -- dialog twice does not re-hit HF. `card` is the frontmatter-stripped,
+        -- size-bounded markdown; a row with empty card means "fetched, no card".
+        CREATE TABLE IF NOT EXISTS hf_card_cache (
+            repo_id     TEXT PRIMARY KEY,
+            card        TEXT NOT NULL DEFAULT '',
+            fetched_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        """,
+    ),
 ]
 
 

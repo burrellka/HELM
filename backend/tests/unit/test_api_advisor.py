@@ -849,3 +849,50 @@ def test_the_default_summary_model_falls_back_to_the_smallest_when_aevum_absent(
 
     client.post(f"/api/v1/advisor/summarize/{GEMMA}")
     assert client.stub.last_chat_body["model"] == "tiny-1b"   # smallest, not the 8B
+
+
+# -- model card (the download/update "what am I getting" view) ---------------
+
+
+def test_model_card_is_fetched_for_a_model_with_an_hf_repo(client, monkeypatch):
+    """GEMMA's checkpoint resolves to unsloth/... so the card endpoint fetches it.
+    The fetch is stubbed (no network); the point is the repo resolves and the
+    card comes back."""
+    from kblocallm import advisor_service
+
+    async def fake_card(self, repo_id, *, force=False):
+        return f"# Card for {repo_id}\nHow to run this model."
+    monkeypatch.setattr(advisor_service.HFMetadataService, "fetch_card", fake_card)
+
+    r = client.get(f"/api/v1/library/card/{GEMMA}").json()
+    assert r["repo_id"] == "unsloth/gemma-4-26B-A4B-it-GGUF"
+    assert "How to run this model" in r["card"]
+
+
+def test_a_local_model_with_no_repo_has_no_card_not_an_invented_one(client):
+    """Aevum is a local-path finetune with nothing remembered — honest absence."""
+    r = client.get(f"/api/v1/library/card/{AEVUM}").json()
+    assert r["repo_id"] is None and r["card"] is None
+    assert "no HuggingFace repo" in r["note"].lower() or "custom" in r["note"].lower()
+
+
+def test_a_remembered_checkpoint_restores_the_card_lookup(client, monkeypatch):
+    """Same fix as external metadata: if HELM remembered the pull-time checkpoint,
+    the card resolves from it even when Lemonade only has a local path."""
+    from kblocallm import advisor_service
+    from kblocallm.advisor_service import ModelSourceStore
+
+    async def fake_card(self, repo_id, *, force=False):
+        return f"# {repo_id} card"
+    monkeypatch.setattr(advisor_service.HFMetadataService, "fetch_card", fake_card)
+    ModelSourceStore(client.app.state.db).set(AEVUM, "someorg/aevum-gguf:Q4_K_M")
+
+    r = client.get(f"/api/v1/library/card/{AEVUM}").json()
+    assert r["repo_id"] == "someorg/aevum-gguf"
+    assert "card" in r["card"].lower()
+
+
+def test_the_card_frontmatter_is_stripped():
+    from kblocallm.advisor_service import _strip_frontmatter
+    body = _strip_frontmatter("---\nlicense: mit\ntags: [a, b]\n---\n\n# Title\nThe prose.")
+    assert body.startswith("# Title") and "license: mit" not in body
