@@ -17,6 +17,22 @@ It runs as a two-container Docker stack. Your models and your data never leave y
 
 ---
 
+## Screenshots
+
+**The dashboard, with a model's live detail expanded** — per-model throughput, the running context llama.cpp is *actually* serving vs what HELM computed, and the fields Lemonade can't answer per-model named as *unavailable* rather than faked or hidden.
+
+![Dashboard with a model's live detail expanded](docs/screenshots/dashboard-detail.png)
+
+**The dedicated per-model detail page** — the same live read, with room to breathe and its own Settings / Update actions.
+
+![Per-model detail page](docs/screenshots/model-detail.png)
+
+**The library** — every model with its capability badges, the honest saved-vs-running settings drift, and an *update available* flag when the source has a newer build.
+
+![Library](docs/screenshots/library.png)
+
+---
+
 ## Why HELM exists
 
 Lemonade Server is a fast, capable local-LLM runtime. But operating a fleet of models on it — which is loaded, whether the context you *think* you set is the context that's *actually* running, whether a model will fit, why throughput dropped — meant reading raw JSON or trusting a UI that quietly rounded the hard parts off.

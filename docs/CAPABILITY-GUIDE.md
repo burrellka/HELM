@@ -149,9 +149,36 @@ one-token response the runtime can report a nonsensical rate (e.g. exactly 1,000
 tok/s). HELM detects the implausible value and shows **"no measurement"** instead of
 printing the lie.
 
+### Running-context drift, and per-model live detail
+
+Two things live on the model row itself. First, under the computed per-slot context, HELM
+shows what llama.cpp is **actually** running (read live from `/slots`): a quiet `running 64K ✓`
+when it matches, a loud warning when the running context has drifted below what you set
+(a cap under memory pressure), and a quiet `running ctx: not attributable` when Lemonade's
+model-blind `/slots` can't be pinned to this model — never a fabricated "no drift". Second,
+a small **update available** pill appears on a loaded model when Lemonade reports a newer
+build upstream; clicking it opens the Update flow in the Library.
+
+Expand any row (the ▸ toggle) for the full per-model detail — fetched on demand, never on
+the poll:
+
+![Dashboard row expanded to live per-model detail](screenshots/dashboard-detail.png)
+
+Per-model throughput comes from Lemonade's Prometheus `/metrics` (with the same
+implausible-rate guard as the strip above). The **Not available per model** column is
+deliberate: fields Lemonade can't answer per-model — queue saturation, KV-cache type,
+prefill throughput — are listed **by name with the reason**, so you see the edge of what's
+knowable rather than a blank that reads as zero. "Open full detail page →" gives the same
+read its own page, with Settings and Update actions:
+
+![Dedicated per-model detail page](screenshots/model-detail.png)
+
 ---
 
 ## 3. Library — the model catalog
+
+![The library](screenshots/library.png)
+
 
 The Library is your whole downloaded-and-available model collection. Search and filtering
 all happen on the server; you send intent, not queries.
