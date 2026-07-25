@@ -68,6 +68,8 @@ The result is a codebase whose comments read like a lab notebook — they explai
 
 You need a running **Lemonade Server** somewhere HELM can reach (same machine or elsewhere on your LAN).
 
+> **New to Strix Halo / AMD Ryzen AI?** If you're still getting the box itself working — the memory pool, GPU/NPU, and Lemonade — my [Strix Halo setup guide](https://github.com/burrellka/MyStrixHaloSetup) walks through it from scratch for non-experts. HELM sits on top of that.
+
 ```bash
 # 1. Get the compose file and the env template
 curl -fsSL https://raw.githubusercontent.com/burrellka/HELM/main/infra/docker-compose.production.yml -o docker-compose.yml
