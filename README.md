@@ -17,19 +17,55 @@ It runs as a two-container Docker stack. Your models and your data never leave y
 
 ---
 
-## Screenshots
+## What HELM does
 
-**The dashboard, with a model's live detail expanded** — per-model throughput, the running context llama.cpp is *actually* serving vs what HELM computed, and the fields Lemonade can't answer per-model named as *unavailable* rather than faked or hidden.
+Lemonade ships a genuinely fast local-LLM server — but a **minimal** UI: essentially a flat model list. The moment you run more than one model, tune context or sampling, or ask "why did throughput drop?", you're back to reading raw `/api/v1/health` JSON by hand. **HELM is the operator layer Lemonade doesn't include** — built on one rule: *show you what's true, or say it doesn't know — never a confident wrong number.*
 
-![Dashboard with a model's live detail expanded](docs/screenshots/dashboard-detail.png)
+### A dashboard that tells the truth
 
-**The dedicated per-model detail page** — the same live read, with room to breathe and its own Settings / Update actions.
+The real memory pool (not the phantom ceiling), **derived per-slot context** instead of the misleading raw `ctx_size`, live throughput, and PID-based crash detection. Expand any model for its full live detail — per-model throughput from Lemonade's `/metrics`, the context llama.cpp is **actually** serving vs what you configured (drift), and the fields Lemonade can't answer per-model shown as *unavailable* with the reason, never faked.
 
-![Per-model detail page](docs/screenshots/model-detail.png)
+![The dashboard with a model's live detail expanded](docs/screenshots/dashboard-detail.png)
 
-**The library** — every model with its capability badges, the honest saved-vs-running settings drift, and an *update available* flag when the source has a newer build.
+Every model also gets its own detail page — the same honest read with room to breathe and Settings / Update at hand:
 
-![Library](docs/screenshots/library.png)
+![The dedicated per-model detail page](docs/screenshots/model-detail.png)
+
+### A Model Advisor that's grounded, never guessing
+
+The feature Lemonade has no equivalent of. It explains your models in plain language, **grounded in your real hardware and inventory** — teaching concepts freely, but never inventing a model-specific fact. Three ways in:
+
+- **Quick Summary** — a fast, plain-language read of a model by a small model, in *seconds*, saved so it's instant next time.
+- **Deep Analysis** — the full teaching write-up (fit math against your pool, alternatives from your *own* models, optional live web search) by the big analysis model. Also saveable.
+- **Chat** — a streaming *"ask about this model"*, anchored to the facts on the left; it answers from those and says **"unknown"** for anything they don't carry, with its reasoning shown live.
+
+Local facts (quant math, fit-against-your-pool), HuggingFace metadata (an honest *"no external record"* when there's no repo), and every generated sentence visibly labeled — no silent hallucinations.
+
+![The Model Advisor — grounded facts on the left, streaming chat on the right](docs/screenshots/advisor.png)
+
+The Analyze panel, with the fast Summary and the saveable Deep Analysis:
+
+![The Analyze panel — Summary and Deep Analysis](docs/screenshots/analyze.png)
+
+### A Library that actually manages models
+
+Not just a list. Every model carries **capability badges** (tool-calling, vision, reasoning — with a tri-state that distinguishes "no tools" from "we couldn't tell"), your own **descriptions, tags, and favorites**, and unified search. Plus the things you'd otherwise do by hand:
+
+- **Download** new models from the catalog, with a live progress indicator in the header.
+- **Update** a model when its source has a newer build — one click, with the HuggingFace **model card shown before you pull**.
+- **Per-model saved-vs-running drift** — see exactly where what's running diverges from what's saved, *before* a restart silently reverts it.
+
+![The Library](docs/screenshots/library.png)
+
+### Operations — your box, read live
+
+A **"current system setup"** panel that reads the machine live — CPU, GPU, the real memory pool, NPU, inference backends, storage, OS, Lemonade version — so nothing about a specific box is hardcoded and the same image runs anywhere by changing one URL. Plus warm-on-startup, benchmarks, and a live log tail.
+
+![Operations — the live system-setup panel](docs/screenshots/operations.png)
+
+### Safe by construction
+
+Load / unload / pin / config sit behind guardrails that **refuse honestly** (a clear local message, not a mysterious 401), pop a confirm before anything disruptive, and spell out exactly which models an action would evict. No admin key? HELM runs **fully read-only** — the whole dashboard and Advisor work, and the write controls are hidden with a note rather than shown failing.
 
 ---
 
