@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/u/brain40)
-[![Release](https://img.shields.io/badge/release-0.8.1-16a34a.svg)](https://github.com/burrellka/kblocallm/releases)
+[![Release](https://img.shields.io/badge/release-0.9.6-16a34a.svg)](https://github.com/burrellka/HELM/releases)
 
 HELM sits in front of a Lemonade Server and gives you:
 
@@ -54,8 +54,8 @@ You need a running **Lemonade Server** somewhere HELM can reach (same machine or
 
 ```bash
 # 1. Get the compose file and the env template
-curl -fsSL https://raw.githubusercontent.com/burrellka/kblocallm/master/infra/docker-compose.production.yml -o docker-compose.yml
-curl -fsSL https://raw.githubusercontent.com/burrellka/kblocallm/master/.env.example -o .env
+curl -fsSL https://raw.githubusercontent.com/burrellka/HELM/main/infra/docker-compose.production.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/burrellka/HELM/main/.env.example -o .env
 
 # 2. Edit .env — set HELM_LEMONADE_URL to your Lemonade server.
 #    Leave HELM_LEMONADE_ADMIN_API_KEY blank to run read-only (safe first step).
@@ -104,7 +104,7 @@ Images are published to Docker Hub as `brain40/helm-api` and `brain40/helm-web`.
 
 ## Status
 
-HELM is actively developed against a live fleet. It has a read-only dashboard, full control surface, library management, operations tooling, and the Model Advisor with streaming chat. See the [release badge](https://github.com/burrellka/kblocallm/releases) for the current version.
+HELM is actively developed against a live fleet. It has a read-only dashboard, full control surface, library management, operations tooling, and the Model Advisor with streaming chat. See the [release badge](https://github.com/burrellka/HELM/releases) for the current version.
 
 ---
 

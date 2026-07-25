@@ -176,6 +176,18 @@ export interface ConcurrencyView {
   note: string | null;
 }
 
+/** Running-context drift (14c §1.12). Tri-state by construction: a `drift` on an
+ *  attributable model is the loud signal; `unknown` is the EXPECTED normal for
+ *  most loaded models (Lemonade's /slots is model-blind) and must render quiet,
+ *  never as a warning. Mirrors backend/api/models.py CtxDriftRow. */
+export interface CtxDriftRow {
+  model_name: string;
+  state: 'match' | 'drift' | 'unknown';
+  computed_per_slot: number | null;
+  running_n_ctx: number | null;
+  detail: string;
+}
+
 export interface ModelRow {
   model_name: string;
   checkpoint: string | null;
@@ -593,6 +605,11 @@ export const api = {
   dashboard: () => request<Dashboard>('/dashboard'),
   /** The 2s poll. /live does no work upstream, so it is safe to hammer. */
   live: () => request<Liveness>('/live'),
+
+  /** Running-context drift for all loaded llamacpp models, one /slots read.
+   *  DELIBERATELY off the dashboard poll (§1.12: /slots stays off the always-on
+   *  cadence) — the Dashboard fetches this on a gentle, separate interval. */
+  ctxDrift: () => request<{ results: CtxDriftRow[] }>('/models/ctx-drift'),
 
   // ── control ───────────────────────────────────────────────────────────────
 

@@ -82,6 +82,7 @@ export default function App() {
             <Dashboard
               managementEnabled={config?.upstream.management_enabled ?? false}
               onConfigure={(modelName) => { setFocusModelId(modelName); setTab('library'); }}
+              onUpdate={(modelName) => { setFocusModelId(modelName); setTab('library'); }}
             />
           )}
           {tab === 'library' && (

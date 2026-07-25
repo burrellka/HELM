@@ -23,6 +23,7 @@ import {
   ApiError,
   api,
   type ConcurrencyView,
+  type CtxDriftRow,
   type Dashboard as DashboardData,
   type Liveness,
   type ModelRow,
@@ -39,17 +40,37 @@ const LIVE_POLL_MS = 2000;
 /** health + system-stats + stats. Deliberately NOT 2s: the dashboard must not
  *  become a load source on the box it is watching. */
 const DASHBOARD_POLL_MS = 5000;
+/** Running-context drift (§1.12). Its own slow cadence, deliberately OFF the 5s
+ *  poll: it costs an extra /slots read, and the running context only changes
+ *  when a model reloads — so a gentle 30s is plenty and keeps /slots off the hot
+ *  path (the architect's explicit trap). */
+const DRIFT_POLL_MS = 30000;
+/** "Update available" is a catalog fact that changes only when Lemonade
+ *  re-checks HuggingFace — rare. Its own slow cadence, off the 5s poll. */
+const UPDATE_POLL_MS = 60000;
 
-export default function Dashboard({ managementEnabled = false, onConfigure }: {
+export default function Dashboard({ managementEnabled = false, onConfigure, onUpdate }: {
   managementEnabled?: boolean;
   /** Jump to the Library focused on this model — that is where the §5.3
    *  settings editor lives, because it needs the catalog record (the trained
    *  context ceiling) that /health alone does not carry. */
   onConfigure?: (modelName: string) => void;
+  /** Jump to the Library focused on this model to run the Update flow (the
+   *  re-pull, the model card, the confirm all live there). */
+  onUpdate?: (modelName: string) => void;
 }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [live, setLive] = useState<Liveness | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  /** Running-context drift by model name. Fetched on its own slow cadence, not
+   *  in the 5s poll. Missing (undefined) means "not read yet", which the row
+   *  shows as nothing — it never invents a "no drift". */
+  const [drift, setDrift] = useState<Record<string, CtxDriftRow>>({});
+  /** Loaded model names Lemonade reports an upstream update for. Only ever
+   *  populated from catalog-MATCHED entries (update_available lives on a catalog
+   *  row), so an unmatched/unknown model can never get a pill — the architect's
+   *  rule holds by construction. Off the 5s poll: it changes rarely. */
+  const [updatable, setUpdatable] = useState<Set<string>>(new Set());
   /** A pending destructive action awaiting confirmation. The 409 flow: HELM
    *  returns the plan, we show what it will evict, THEN the operator decides. */
   const [pending, setPending] = useState<{ plan: Plan; run: () => Promise<void> } | null>(null);
@@ -74,6 +95,31 @@ export default function Dashboard({ managementEnabled = false, onConfigure }: {
         error_detail: 'HELM could not be reached from the browser.' });
     }
   }, []), LIVE_POLL_MS);
+
+  usePoll(useCallback(async () => {
+    try {
+      const { results } = await api.ctxDrift();
+      setDrift(Object.fromEntries(results.map((r) => [r.model_name, r])));
+    } catch {
+      // A drift read failure is not a fleet problem — it just means we can't
+      // show the running-context line this cycle. Leave the last read in place
+      // rather than blanking it or, worse, implying "no drift".
+    }
+  }, []), DRIFT_POLL_MS);
+
+  usePoll(useCallback(async () => {
+    try {
+      // Only downloaded entries can be loaded, and update_available only exists
+      // on a catalog-matched row — so this is already scoped to the models that
+      // could honestly show a pill.
+      const { entries } = await api.library({ downloaded: true });
+      setUpdatable(new Set(
+        entries.filter((e) => e.loaded && e.update_available).map((e) => e.model_id),
+      ));
+    } catch {
+      // A failed update check just means no pills this cycle. Never guess.
+    }
+  }, []), UPDATE_POLL_MS);
 
   /**
    * Run a control action, routing the 409 "needs confirmation" response into a
@@ -116,7 +162,7 @@ export default function Dashboard({ managementEnabled = false, onConfigure }: {
       {data && <ResourceHeader resources={data.resources} />}
       {data && (
         <ModelsTable models={data.models} managementEnabled={managementEnabled} act={act}
-          onConfigure={onConfigure} />
+          onConfigure={onConfigure} onUpdate={onUpdate} drift={drift} updatable={updatable} />
       )}
       {data?.throughput && <ThroughputStrip throughput={data.throughput} />}
       {data && <FooterNote version={data.lemonade_version} managementEnabled={managementEnabled} />}
@@ -369,9 +415,12 @@ function Capacity({ resources }: { resources: ResourceView }) {
 
 type Act = (attempt: (confirm: boolean) => Promise<unknown>) => Promise<void>;
 
-function ModelsTable({ models, managementEnabled, act, onConfigure }: {
+function ModelsTable({ models, managementEnabled, act, onConfigure, onUpdate, drift, updatable }: {
   models: ModelRow[]; managementEnabled: boolean; act: Act;
   onConfigure?: (modelName: string) => void;
+  onUpdate?: (modelName: string) => void;
+  drift: Record<string, CtxDriftRow>;
+  updatable: Set<string>;
 }) {
   if (!models.length) {
     return (
@@ -399,7 +448,8 @@ function ModelsTable({ models, managementEnabled, act, onConfigure }: {
         <tbody>
           {models.map((m) => (
             <Row key={m.model_name} model={m} managementEnabled={managementEnabled} act={act}
-              onConfigure={onConfigure} />
+              onConfigure={onConfigure} onUpdate={onUpdate}
+              drift={drift[m.model_name]} updateAvailable={updatable.has(m.model_name)} />
           ))}
         </tbody>
       </table>
@@ -426,14 +476,20 @@ function Td({ children, title }: { children: React.ReactNode; title?: string }) 
   );
 }
 
-function Row({ model, managementEnabled, act, onConfigure }: {
+function Row({ model, managementEnabled, act, onConfigure, onUpdate, drift, updateAvailable }: {
   model: ModelRow; managementEnabled: boolean; act: Act;
   onConfigure?: (modelName: string) => void;
+  onUpdate?: (modelName: string) => void;
+  drift?: CtxDriftRow;
+  updateAvailable?: boolean;
 }) {
   return (
     <tr>
       <Td title={model.checkpoint ?? undefined}>
-        <div style={{ fontWeight: 600 }}>{model.model_name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 600 }}>{model.model_name}</span>
+          {updateAvailable && <UpdatePill onClick={() => onUpdate?.(model.model_name)} />}
+        </div>
         {model.checkpoint && (
           <div className="stat-sub mono" style={{
             maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -442,7 +498,7 @@ function Row({ model, managementEnabled, act, onConfigure }: {
       </Td>
       <Td><DeviceBadge device={model.device} /></Td>
       <Td><span className="mono" style={{ fontSize: '0.8125rem' }}>{model.backend_label}</span></Td>
-      <Td><Concurrency c={model.concurrency} /></Td>
+      <Td><Concurrency c={model.concurrency} drift={drift} /></Td>
       <Td>
         {model.pinned
           ? <span title="Exempt from LRU eviction. Pinned does NOT mean it reloads after a lemond restart.">
@@ -491,6 +547,28 @@ function Row({ model, managementEnabled, act, onConfigure }: {
   );
 }
 
+/**
+ * "Update available" — shown ONLY on catalog-matched loaded models (the data
+ * behind it comes from a matched catalog row, so an unmatched or unknown model
+ * can never reach here). Clicking routes to the Library's Update flow, where the
+ * re-pull, the HF model card, and the confirm live — this pill is the signal,
+ * not the action, so it never re-pulls straight from the dashboard.
+ */
+function UpdatePill({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="Lemonade reports a newer build of this model on HuggingFace. Opens the Update flow in the Library."
+      style={{
+        cursor: 'pointer', border: '1px solid var(--status-warn)', background: 'var(--status-warn-soft)',
+        color: 'var(--status-warn)', borderRadius: 999, padding: '0.0625rem 0.5rem',
+        fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.02em', whiteSpace: 'nowrap',
+      }}
+    >update available</button>
+  );
+}
+
 function DeviceBadge({ device }: { device: string | null }) {
   if (!device) return <span className="unknown">unknown</span>;
   const cls = { gpu: 'badge badge-gpu', npu: 'badge badge-npu', cpu: 'badge badge-cpu' }[device]
@@ -499,7 +577,7 @@ function DeviceBadge({ device }: { device: string | null }) {
 }
 
 /** Renders the pre-derived string. The math lives in the backend, tested. */
-function Concurrency({ c }: { c: ConcurrencyView }) {
+function Concurrency({ c, drift }: { c: ConcurrencyView; drift?: CtxDriftRow }) {
   const unknown = c.kind === 'unknown';
   return (
     <div title={[c.note, c.slot_policy && `slot_policy: ${c.slot_policy}`]
@@ -510,8 +588,58 @@ function Concurrency({ c }: { c: ConcurrencyView }) {
       {c.kind === 'slots' && c.per_slot_ctx != null && (
         <div className="stat-sub">context per slot</div>
       )}
+      <DriftLine drift={drift} />
     </div>
   );
+}
+
+/**
+ * The running-context truth, under the computed value (§1.12).
+ *
+ * The whole point of this line is the ONE case where it must shout: llama.cpp is
+ * running a smaller context than HELM computed (a cap under memory pressure).
+ * Everything else stays quiet, and that restraint is deliberate — per the
+ * architect, `unknown` is the EXPECTED normal for most loaded models (Lemonade's
+ * /slots is model-blind and only attributable to one instance). If `unknown`
+ * rendered as a warning, the operator would learn to ignore this line, and then
+ * miss the real cap when it appears — the F8 permanently-lit-flag trap. So:
+ *   - drift  -> loud (warning color, running vs set)
+ *   - match  -> a quiet confirmation, no colour
+ *   - unknown-> a muted, neutral note, never a caution
+ */
+function DriftLine({ drift }: { drift?: CtxDriftRow }) {
+  if (!drift) return null; // not read yet — never invent a state
+  if (drift.state === 'drift') {
+    return (
+      <div title={drift.detail}
+        style={{ color: 'var(--status-warn)', fontWeight: 600, fontSize: '0.75rem', marginTop: '0.25rem' }}>
+        ⚠ running {fmtCtx(drift.running_n_ctx)}
+        {drift.computed_per_slot != null && (
+          <span style={{ fontWeight: 400 }}> (set {fmtCtx(drift.computed_per_slot)})</span>
+        )}
+      </div>
+    );
+  }
+  if (drift.state === 'match') {
+    return (
+      <div className="stat-sub" title={drift.detail} style={{ marginTop: '0.25rem' }}>
+        running {fmtCtx(drift.running_n_ctx)} ✓
+      </div>
+    );
+  }
+  // unknown: quiet and neutral. It is not a problem, so it must not look like one.
+  return (
+    <div className="stat-sub" title={drift.detail} style={{ marginTop: '0.25rem' }}>
+      running ctx: not attributable
+    </div>
+  );
+}
+
+/** 65536 -> '64K', keeping non-round numbers honest. Mirrors the backend's
+ *  format_ctx so the two surfaces read the same. */
+function fmtCtx(n: number | null): string {
+  if (n == null) return '—';
+  return n >= 1024 && n % 1024 === 0 ? `${n / 1024}K` : n.toLocaleString();
 }
 
 function Status({ model }: { model: ModelRow }) {

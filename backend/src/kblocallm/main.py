@@ -18,7 +18,17 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 
-from .api import advisor, config, control, dashboard, health, library, operations, system
+from .api import (
+    advisor,
+    config,
+    control,
+    dashboard,
+    health,
+    library,
+    models,
+    operations,
+    system,
+)
 from .auth import AuthStore, require_auth, resolve_jwt_secret
 from .auth.routes import router as auth_router
 from .config import Settings, get_settings
@@ -231,6 +241,7 @@ def create_app() -> FastAPI:
     # control endpoints land on routers that come through here, and F1a's
     # whole point is that they cannot arrive unguarded.
     app.include_router(dashboard.router, dependencies=_AUTH_REQUIRED)
+    app.include_router(models.router, dependencies=_AUTH_REQUIRED)
     # Phase 2/3/4. control and library carry every write HELM can make —
     # load, unload, pin, pull, delete — which is exactly why they are mounted
     # here rather than decorated per-endpoint. A forgotten decorator on
