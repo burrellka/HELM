@@ -23,13 +23,13 @@ Lemonade ships a genuinely fast local-LLM server — but a **minimal** UI: essen
 
 ### A dashboard that tells the truth
 
-The real memory pool (not the phantom ceiling), **derived per-slot context** instead of the misleading raw `ctx_size`, live throughput, and PID-based crash detection. Expand any model for its full live detail — per-model throughput from Lemonade's `/metrics`, the context llama.cpp is **actually** serving vs what you configured (drift), and the fields Lemonade can't answer per-model shown as *unavailable* with the reason, never faked.
+The real memory pool (not the phantom ceiling), **derived per-slot context** instead of the misleading raw `ctx_size`, live throughput, PID-based crash detection, and — right on each row — the context llama.cpp is **actually** serving vs what you configured (drift), plus an *update available* flag when a model's source has a newer build.
 
-![The dashboard with a model's live detail expanded](docs/screenshots/dashboard-detail.png)
+![The HELM dashboard — the whole fleet at a glance](docs/screenshots/dashboard.png)
 
-Every model also gets its own detail page — the same honest read with room to breathe and Settings / Update at hand:
+Expand any model, or open its dedicated page, for the full live detail — per-model throughput from Lemonade's `/metrics`, running context, and the fields Lemonade can't answer per-model shown as *unavailable* with the reason, never faked:
 
-![The dedicated per-model detail page](docs/screenshots/model-detail.png)
+![A model's dedicated detail page](docs/screenshots/model-detail.png)
 
 ### A Model Advisor that's grounded, never guessing
 
