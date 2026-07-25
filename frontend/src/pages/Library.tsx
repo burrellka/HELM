@@ -328,6 +328,8 @@ function EntryCard({ entry, managementEnabled, onEdit, onLoad, onRevert, onRawCo
             </div>
           )}
 
+          <ModelCardSection entry={entry} />
+
           {entry.drift && (
             <SettingsPanel
               drift={entry.drift}
@@ -649,6 +651,81 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
     <div>
       <div className="stat-sub">{label}</div>
       <div style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{value}</div>
+    </div>
+  );
+}
+
+/** Derive a HuggingFace repo from a checkpoint client-side, or null. A checkpoint
+ *  like `org/repo:quant` is an HF repo; a local file path (starts with '/' or has
+ *  a backslash) is not. */
+function hfRepoFromCheckpoint(checkpoint: string | null): string | null {
+  if (!checkpoint || checkpoint.startsWith('/') || checkpoint.includes('\\')) return null;
+  const repo = checkpoint.split(':')[0];
+  return /^[^/\s]+\/[^/\s]+$/.test(repo) ? repo : null;
+}
+
+/**
+ * Per-row HuggingFace link + a collapsed-by-default description (the model card).
+ * The link is instant (derived from the checkpoint); the card is lazy — fetched
+ * only when the operator expands it, so browsing the library never fans out a
+ * pile of HF calls. Renders nothing for a model with no resolvable HF repo.
+ */
+function ModelCardSection({ entry }: { entry: LibraryEntry }) {
+  const [open, setOpen] = useState(false);
+  const [card, setCard] = useState<{ card: string | null; note: string | null } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [repoId, setRepoId] = useState<string | null>(hfRepoFromCheckpoint(entry.checkpoint));
+
+  const toggle = async () => {
+    const next = !open;
+    setOpen(next);
+    if (next && card === null && !loading) {
+      setLoading(true);
+      try {
+        const r = await api.modelCard(entry.model_id);
+        setCard({ card: r.card, note: r.note });
+        if (r.repo_id) setRepoId(r.repo_id);   // covers a remembered-checkpoint repo
+      } catch {
+        setCard({ card: null, note: 'Could not load the model card.' });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  if (!repoId) return null;   // no HF page and no card to point at
+
+  return (
+    <div style={{ marginTop: '0.5rem' }}>
+      <a href={`https://huggingface.co/${repoId}`} target="_blank" rel="noreferrer noopener"
+        style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--accent-primary)' }}>
+        View on HuggingFace ↗
+      </a>
+      <div style={{ marginTop: '0.25rem' }}>
+        <button type="button" onClick={() => void toggle()}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: '0.3rem',
+          }}>
+          <span>{open ? '▾' : '▸'}</span> Description
+        </button>
+        {open && (
+          <div style={{
+            marginTop: '0.375rem', maxHeight: '34vh', overflowY: 'auto',
+            padding: '0.625rem 0.75rem', background: 'var(--bg-subtle)',
+            border: '1px solid var(--border-color)', borderRadius: 8,
+          }}>
+            {loading ? (
+              <p className="stat-sub" style={{ margin: 0 }}>Loading the model card…</p>
+            ) : card?.card ? (
+              <Markdown>{card.card}</Markdown>
+            ) : (
+              <span className="stat-sub">{card?.note ?? 'No model card available.'}</span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
