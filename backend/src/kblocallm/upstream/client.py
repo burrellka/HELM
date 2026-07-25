@@ -157,12 +157,16 @@ class LemonadeClient:
         timeout: httpx.Timeout = FAST,
         json_body: dict | None = None,
         params: dict | None = None,
+        raw: bool = False,
     ) -> Any:
         """One request, classified failures, no silent fallbacks.
 
         `admin=True` marks a management/write route (spec §4.2). We refuse
         BEFORE the network call when there's no key — a clear local error
         beats a remote 401 the operator has to interpret.
+
+        `raw=True` returns the response body as text instead of parsing JSON —
+        for Lemonade's Prometheus `/metrics`, which is text/plain, not JSON.
         """
         if admin and not self._admin_key:
             raise UpstreamError(
@@ -237,6 +241,8 @@ class LemonadeClient:
 
         if not resp.content:
             return None
+        if raw:
+            return resp.text
         try:
             return resp.json()
         except ValueError as e:

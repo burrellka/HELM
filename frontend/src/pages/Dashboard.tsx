@@ -26,6 +26,7 @@ import {
   type CtxDriftRow,
   type Dashboard as DashboardData,
   type Liveness,
+  type ModelDetail,
   type ModelRow,
   type Plan,
   type PoolView,
@@ -34,6 +35,7 @@ import {
   type ThroughputView,
 } from '../api/client';
 import { Issues, Modal } from '../components/common';
+import { ModelDetailView, fmtCtx } from '../components/ModelDetailView';
 
 /** /live does no work upstream (spec §4.1), so 2s is free. */
 const LIVE_POLL_MS = 2000;
@@ -49,7 +51,7 @@ const DRIFT_POLL_MS = 30000;
  *  re-checks HuggingFace — rare. Its own slow cadence, off the 5s poll. */
 const UPDATE_POLL_MS = 60000;
 
-export default function Dashboard({ managementEnabled = false, onConfigure, onUpdate }: {
+export default function Dashboard({ managementEnabled = false, onConfigure, onUpdate, onOpenDetail }: {
   managementEnabled?: boolean;
   /** Jump to the Library focused on this model — that is where the §5.3
    *  settings editor lives, because it needs the catalog record (the trained
@@ -58,6 +60,8 @@ export default function Dashboard({ managementEnabled = false, onConfigure, onUp
   /** Jump to the Library focused on this model to run the Update flow (the
    *  re-pull, the model card, the confirm all live there). */
   onUpdate?: (modelName: string) => void;
+  /** Open the dedicated per-model detail page. */
+  onOpenDetail?: (modelName: string) => void;
 }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [live, setLive] = useState<Liveness | null>(null);
@@ -162,7 +166,8 @@ export default function Dashboard({ managementEnabled = false, onConfigure, onUp
       {data && <ResourceHeader resources={data.resources} />}
       {data && (
         <ModelsTable models={data.models} managementEnabled={managementEnabled} act={act}
-          onConfigure={onConfigure} onUpdate={onUpdate} drift={drift} updatable={updatable} />
+          onConfigure={onConfigure} onUpdate={onUpdate} onOpenDetail={onOpenDetail}
+          drift={drift} updatable={updatable} />
       )}
       {data?.throughput && <ThroughputStrip throughput={data.throughput} />}
       {data && <FooterNote version={data.lemonade_version} managementEnabled={managementEnabled} />}
@@ -415,10 +420,11 @@ function Capacity({ resources }: { resources: ResourceView }) {
 
 type Act = (attempt: (confirm: boolean) => Promise<unknown>) => Promise<void>;
 
-function ModelsTable({ models, managementEnabled, act, onConfigure, onUpdate, drift, updatable }: {
+function ModelsTable({ models, managementEnabled, act, onConfigure, onUpdate, onOpenDetail, drift, updatable }: {
   models: ModelRow[]; managementEnabled: boolean; act: Act;
   onConfigure?: (modelName: string) => void;
   onUpdate?: (modelName: string) => void;
+  onOpenDetail?: (modelName: string) => void;
   drift: Record<string, CtxDriftRow>;
   updatable: Set<string>;
 }) {
@@ -448,8 +454,9 @@ function ModelsTable({ models, managementEnabled, act, onConfigure, onUpdate, dr
         <tbody>
           {models.map((m) => (
             <Row key={m.model_name} model={m} managementEnabled={managementEnabled} act={act}
-              onConfigure={onConfigure} onUpdate={onUpdate}
-              drift={drift[m.model_name]} updateAvailable={updatable.has(m.model_name)} />
+              onConfigure={onConfigure} onUpdate={onUpdate} onOpenDetail={onOpenDetail}
+              drift={drift[m.model_name]} updateAvailable={updatable.has(m.model_name)}
+              colSpan={managementEnabled ? 9 : 8} />
           ))}
         </tbody>
       </table>
@@ -476,17 +483,30 @@ function Td({ children, title }: { children: React.ReactNode; title?: string }) 
   );
 }
 
-function Row({ model, managementEnabled, act, onConfigure, onUpdate, drift, updateAvailable }: {
+function Row({ model, managementEnabled, act, onConfigure, onUpdate, onOpenDetail, drift, updateAvailable, colSpan }: {
   model: ModelRow; managementEnabled: boolean; act: Act;
   onConfigure?: (modelName: string) => void;
   onUpdate?: (modelName: string) => void;
+  onOpenDetail?: (modelName: string) => void;
   drift?: CtxDriftRow;
   updateAvailable?: boolean;
+  colSpan: number;
 }) {
+  const [expanded, setExpanded] = useState(false);
   return (
+    <>
     <tr>
       <Td title={model.checkpoint ?? undefined}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            type="button" onClick={() => setExpanded((e) => !e)}
+            aria-expanded={expanded}
+            title={expanded ? 'Hide live detail' : 'Show live detail (throughput, running context, ports)'}
+            style={{
+              cursor: 'pointer', border: 'none', background: 'none', color: 'var(--text-secondary)',
+              padding: 0, fontSize: '0.75rem', width: '1rem', lineHeight: 1,
+            }}
+          >{expanded ? '▾' : '▸'}</button>
           <span style={{ fontWeight: 600 }}>{model.model_name}</span>
           {updateAvailable && <UpdatePill onClick={() => onUpdate?.(model.model_name)} />}
         </div>
@@ -544,6 +564,63 @@ function Row({ model, managementEnabled, act, onConfigure, onUpdate, drift, upda
         </Td>
       )}
     </tr>
+    {expanded && (
+      <tr>
+        <td colSpan={colSpan} style={{
+          padding: 0, borderBottom: '1px solid var(--border-color)', background: 'var(--bg-subtle)',
+        }}>
+          <DetailPanel modelName={model.model_name} onOpenDetail={onOpenDetail} />
+        </td>
+      </tr>
+    )}
+    </>
+  );
+}
+
+/**
+ * The live per-model detail, fetched on demand from /detail when a row expands.
+ *
+ * On demand is the point: /detail costs three upstream reads (/health, /slots,
+ * /metrics), so it is NEVER on the 5s poll — it fires only when the operator
+ * opens a row. Everything here keeps the house honesty rules: an implausible
+ * per-model rate shows "no measurement", a missing throughput series shows
+ * "unavailable" (not 0), and the fields Lemonade can't answer per-model are
+ * listed by name with the reason rather than quietly dropped.
+ */
+function DetailPanel({ modelName, onOpenDetail }: {
+  modelName: string; onOpenDetail?: (modelName: string) => void;
+}) {
+  const [detail, setDetail] = useState<ModelDetail | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    setDetail(null); setError(null);
+    api.modelDetail(modelName)
+      .then((d) => { if (live) setDetail(d); })
+      .catch((e) => { if (live) setError(e instanceof Error ? e.message : String(e)); });
+    return () => { live = false; };
+  }, [modelName]);
+
+  if (error) {
+    return <div style={{ padding: '0.875rem 1rem' }}>
+      <span className="unknown">Could not load live detail: {error}</span>
+    </div>;
+  }
+  if (!detail) {
+    return <div style={{ padding: '0.875rem 1rem' }} className="stat-sub">Reading live detail…</div>;
+  }
+
+  return (
+    <div style={{ padding: '1rem 1.25rem' }}>
+      <ModelDetailView detail={detail} />
+      {onOpenDetail && (
+        <button
+          type="button" className="btn-secondary" style={{ marginTop: '1rem' }}
+          onClick={() => onOpenDetail(modelName)}
+        >Open full detail page →</button>
+      )}
+    </div>
   );
 }
 
@@ -633,13 +710,6 @@ function DriftLine({ drift }: { drift?: CtxDriftRow }) {
       running ctx: not attributable
     </div>
   );
-}
-
-/** 65536 -> '64K', keeping non-round numbers honest. Mirrors the backend's
- *  format_ctx so the two surfaces read the same. */
-function fmtCtx(n: number | null): string {
-  if (n == null) return '—';
-  return n >= 1024 && n % 1024 === 0 ? `${n / 1024}K` : n.toLocaleString();
 }
 
 function Status({ model }: { model: ModelRow }) {

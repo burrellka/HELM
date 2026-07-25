@@ -188,6 +188,36 @@ export interface CtxDriftRow {
   detail: string;
 }
 
+/** One normalized per-model detail payload (14c §1.12). Assembled on demand
+ *  from /health + /slots + /metrics. Mirrors backend/api/models.py DetailOut. */
+export interface ModelDetail {
+  model_name: string;
+  checkpoint: string | null;
+  recipe: string | null;
+  device: string | null;
+  type: string | null;
+  loaded: boolean;
+  pinned: boolean;
+  backend_label: string;
+  max_context_window: number | null;
+  port: number | null;
+  pid: number | null;
+  concurrency: { kind: string; display: string; slots: number | null; per_slot_ctx: number | null; note: string | null };
+  ctx_drift: CtxDriftRow;
+  /** Per-model throughput from /metrics. null = no series (unavailable, not 0). */
+  throughput: {
+    tokens_per_second: number | null;
+    rate_implausible: boolean;
+    rate_note: string | null;
+    time_to_first_token: number | null;
+    requests_total: number | null;
+    input_tokens_total: number | null;
+    output_tokens_total: number | null;
+  } | null;
+  /** §1.12 fields Lemonade can't answer per-model yet — named, not omitted. */
+  deferred: { name: string; reason: string }[];
+}
+
 export interface ModelRow {
   model_name: string;
   checkpoint: string | null;
@@ -610,6 +640,11 @@ export const api = {
    *  DELIBERATELY off the dashboard poll (§1.12: /slots stays off the always-on
    *  cadence) — the Dashboard fetches this on a gentle, separate interval. */
   ctxDrift: () => request<{ results: CtxDriftRow[] }>('/models/ctx-drift'),
+
+  /** Full per-model detail (identity + concurrency + drift + throughput +
+   *  honestly-named unavailable fields). On demand only — 3 upstream reads. */
+  modelDetail: (modelId: string) =>
+    request<ModelDetail>(`/models/${encodeURIComponent(modelId)}/detail`),
 
   // ── control ───────────────────────────────────────────────────────────────
 

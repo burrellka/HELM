@@ -1,0 +1,153 @@
+# HELP lemonade_server_up Whether the Lemonade server is running.
+# TYPE lemonade_server_up gauge
+lemonade_server_up 1
+# HELP lemonade_server_info Lemonade server build information.
+# TYPE lemonade_server_info gauge
+lemonade_server_info{version="10.10.0"} 1
+# HELP lemonade_loaded_models Number of models currently loaded in Lemonade.
+# TYPE lemonade_loaded_models gauge
+lemonade_loaded_models 3
+# HELP lemonade_model_info Metadata for each Lemonade model observed by this process.
+# TYPE lemonade_model_info gauge
+# HELP lemonade_model_loaded Whether this model is currently loaded in Lemonade.
+# TYPE lemonade_model_loaded gauge
+# HELP lemonade_model_input_tokens Latest input token count reported by a model.
+# TYPE lemonade_model_input_tokens gauge
+# HELP lemonade_model_output_tokens Latest output token count reported by a model.
+# TYPE lemonade_model_output_tokens gauge
+# HELP lemonade_model_prompt_tokens Latest prompt token count reported by a model.
+# TYPE lemonade_model_prompt_tokens gauge
+# HELP lemonade_model_time_to_first_token_seconds Latest time to first token reported by a model.
+# TYPE lemonade_model_time_to_first_token_seconds gauge
+# HELP lemonade_model_tokens_per_second Latest generation throughput reported by a model.
+# TYPE lemonade_model_tokens_per_second gauge
+# HELP lemonade_model_requests_total Cumulative inference requests observed for a model.
+# TYPE lemonade_model_requests_total counter
+# HELP lemonade_model_input_tokens_total Cumulative input tokens observed for a model.
+# TYPE lemonade_model_input_tokens_total counter
+# HELP lemonade_model_output_tokens_total Cumulative output tokens observed for a model.
+# TYPE lemonade_model_output_tokens_total counter
+# HELP lemonade_model_prompt_tokens_total Cumulative prompt tokens observed for a model.
+# TYPE lemonade_model_prompt_tokens_total counter
+lemonade_model_info{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_model_loaded{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_model_input_tokens{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_model_output_tokens{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 8
+lemonade_model_prompt_tokens{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_model_time_to_first_token_seconds{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 0.026832999999999999
+lemonade_model_tokens_per_second{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 60.01860576778801
+lemonade_model_requests_total{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 35
+lemonade_model_input_tokens_total{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 269535
+lemonade_model_output_tokens_total{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 21594
+lemonade_model_prompt_tokens_total{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 269535
+lemonade_model_info{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_model_loaded{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_model_input_tokens{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 10
+lemonade_model_output_tokens{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_model_prompt_tokens{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 10
+lemonade_model_time_to_first_token_seconds{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 0.021217
+lemonade_model_tokens_per_second{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 1000000
+lemonade_model_requests_total{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_model_input_tokens_total{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 10
+lemonade_model_output_tokens_total{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_model_prompt_tokens_total{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 10
+lemonade_model_info{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 1
+lemonade_model_loaded{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 1
+lemonade_model_input_tokens{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 1
+lemonade_model_output_tokens{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 198
+lemonade_model_prompt_tokens{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 1
+lemonade_model_time_to_first_token_seconds{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 0.0067840000000000001
+lemonade_model_tokens_per_second{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 229.25980346182303
+lemonade_model_requests_total{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 6
+lemonade_model_input_tokens_total{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 143
+lemonade_model_output_tokens_total{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 1173
+lemonade_model_prompt_tokens_total{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 143
+# HELP lemonade_llamacpp_prompt_tokens_total Number of prompt tokens processed.
+# TYPE lemonade_llamacpp_prompt_tokens_total counter
+lemonade_llamacpp_prompt_tokens_total{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 143
+# HELP lemonade_llamacpp_prompt_seconds_total Prompt process time
+# TYPE lemonade_llamacpp_prompt_seconds_total counter
+lemonade_llamacpp_prompt_seconds_total{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 0.088
+# HELP lemonade_llamacpp_tokens_predicted_total Number of generation tokens processed.
+# TYPE lemonade_llamacpp_tokens_predicted_total counter
+lemonade_llamacpp_tokens_predicted_total{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 1173
+# HELP lemonade_llamacpp_tokens_predicted_seconds_total Predict process time
+# TYPE lemonade_llamacpp_tokens_predicted_seconds_total counter
+lemonade_llamacpp_tokens_predicted_seconds_total{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 5.105
+# HELP lemonade_llamacpp_n_decode_total Total number of llama_decode() calls
+# TYPE lemonade_llamacpp_n_decode_total counter
+lemonade_llamacpp_n_decode_total{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 1174
+# HELP lemonade_llamacpp_n_tokens_max Largest observed n_tokens.
+# TYPE lemonade_llamacpp_n_tokens_max counter
+lemonade_llamacpp_n_tokens_max{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 356
+# HELP lemonade_llamacpp_prompt_tokens_seconds Average prompt throughput in tokens/s.
+# TYPE lemonade_llamacpp_prompt_tokens_seconds gauge
+lemonade_llamacpp_prompt_tokens_seconds{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 1625
+# HELP lemonade_llamacpp_predicted_tokens_seconds Average generation throughput in tokens/s.
+# TYPE lemonade_llamacpp_predicted_tokens_seconds gauge
+lemonade_llamacpp_predicted_tokens_seconds{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 229.775
+# HELP lemonade_llamacpp_requests_processing Number of requests processing.
+# TYPE lemonade_llamacpp_requests_processing gauge
+lemonade_llamacpp_requests_processing{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 0
+# HELP lemonade_llamacpp_requests_deferred Number of requests deferred.
+# TYPE lemonade_llamacpp_requests_deferred gauge
+lemonade_llamacpp_requests_deferred{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 0
+# HELP lemonade_llamacpp_n_busy_slots_per_decode Average number of busy slots per llama_decode() call
+# TYPE lemonade_llamacpp_n_busy_slots_per_decode gauge
+lemonade_llamacpp_n_busy_slots_per_decode{checkpoint="/mnt/nvme-apps/apps/localai/models/Aevum-0.6B-Finetuned.Q4_K_M.gguf",device="gpu",model_name="Aevum-0.6B-Finetuned.Q4_K_M",recipe="llamacpp",type="llm"} 1
+lemonade_llamacpp_prompt_tokens_total{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 282237
+lemonade_llamacpp_prompt_seconds_total{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 518.122
+lemonade_llamacpp_tokens_predicted_total{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 21602
+lemonade_llamacpp_tokens_predicted_seconds_total{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 496.225
+lemonade_llamacpp_n_decode_total{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 8417
+lemonade_llamacpp_n_tokens_max{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 24785
+lemonade_llamacpp_prompt_tokens_seconds{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 544.731
+lemonade_llamacpp_predicted_tokens_seconds{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 43.5327
+lemonade_llamacpp_requests_processing{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 0
+lemonade_llamacpp_requests_deferred{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 0
+lemonade_llamacpp_n_busy_slots_per_decode{checkpoint="unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M",device="gpu",model_name="Gemma-4-26B-A4B-it-MTP-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_llamacpp_prompt_tokens_total{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 10
+lemonade_llamacpp_prompt_seconds_total{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 0.021
+lemonade_llamacpp_tokens_predicted_total{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 1
+lemonade_llamacpp_tokens_predicted_seconds_total{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 0
+lemonade_llamacpp_n_decode_total{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 2
+lemonade_llamacpp_n_tokens_max{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 10
+lemonade_llamacpp_prompt_tokens_seconds{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 476.19
+lemonade_llamacpp_predicted_tokens_seconds{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} inf
+lemonade_llamacpp_requests_processing{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 0
+lemonade_llamacpp_requests_deferred{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 0
+lemonade_llamacpp_n_busy_slots_per_decode{checkpoint="LiquidAI/LFM2.5-1.2B-Instruct-GGUF:LFM2.5-1.2B-Instruct-Q4_K_M.gguf",device="gpu",model_name="LFM2.5-1.2B-Instruct-GGUF",recipe="llamacpp",type="llm"} 1
+# HELP lemonade_max_loaded_models Configured loaded model limit per model type.
+# TYPE lemonade_max_loaded_models gauge
+lemonade_max_loaded_models{type="embedding"} 10
+lemonade_max_loaded_models{type="image"} 10
+lemonade_max_loaded_models{type="llm"} 10
+lemonade_max_loaded_models{type="reranking"} 10
+lemonade_max_loaded_models{type="transcription"} 10
+lemonade_max_loaded_models{type="tts"} 10
+# HELP lemonade_requests_total Cumulative inference requests observed by Lemonade.
+# TYPE lemonade_requests_total counter
+# HELP lemonade_input_tokens_total Cumulative input tokens observed by Lemonade.
+# TYPE lemonade_input_tokens_total counter
+# HELP lemonade_output_tokens_total Cumulative output tokens observed by Lemonade.
+# TYPE lemonade_output_tokens_total counter
+# HELP lemonade_prompt_tokens_total Cumulative prompt tokens observed by Lemonade.
+# TYPE lemonade_prompt_tokens_total counter
+lemonade_requests_total 42
+lemonade_input_tokens_total 269688
+lemonade_output_tokens_total 22768
+lemonade_prompt_tokens_total 269688
+# HELP lemonade_cpu_usage_percent System CPU utilization percentage.
+# TYPE lemonade_cpu_usage_percent gauge
+lemonade_cpu_usage_percent 0.23393705092098815
+# HELP lemonade_memory_used_gb System memory usage in GiB.
+# TYPE lemonade_memory_used_gb gauge
+lemonade_memory_used_gb 55.600000000000001
+# HELP lemonade_gpu_usage_percent GPU utilization percentage.
+# TYPE lemonade_gpu_usage_percent gauge
+lemonade_gpu_usage_percent 100
+# HELP lemonade_vram_used_gb GPU memory usage in GiB.
+# TYPE lemonade_vram_used_gb gauge
+lemonade_vram_used_gb 38.173130035400391
+# HELP lemonade_npu_usage_percent NPU utilization percentage.
+# TYPE lemonade_npu_usage_percent gauge

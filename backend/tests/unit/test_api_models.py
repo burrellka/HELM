@@ -28,18 +28,24 @@ class StubClient:
         #: shape — /slots resolves to one instance and carries no model label).
         self.slots = [{"id": i, "n_ctx": 65536, "is_processing": False} for i in range(8)]
         self.slots_fail: UpstreamError | None = None
+        self.metrics = (FIXTURES / "metrics.txt").read_text()
+        self.metrics_fail: UpstreamError | None = None
 
     @property
     def has_admin_key(self) -> bool:
         return True
 
-    async def request(self, method, path, *, admin=False, timeout=None, json_body=None, params=None):
+    async def request(self, method, path, *, admin=False, timeout=None, json_body=None, params=None, raw=False):
         if path.endswith("/health"):
             return self.health
         if path.endswith("/slots"):
             if self.slots_fail is not None:
                 raise self.slots_fail
             return self.slots
+        if path.endswith("/metrics"):
+            if self.metrics_fail is not None:
+                raise self.metrics_fail
+            return self.metrics
         return {"ok": True}
 
     async def aclose(self):
@@ -129,6 +135,48 @@ def test_batch_502_when_health_unreachable(client):
         raise UpstreamError(UpstreamErrorKind.UNREACHABLE, "box down")
     client.stub.request = boom
     assert client.get("/api/v1/models/ctx-drift").status_code == 502
+
+
+def test_detail_assembles_identity_concurrency_drift_throughput(client):
+    body = client.get(f"/api/v1/models/{B26}/detail").json()
+    assert body["model_name"] == B26
+    assert body["checkpoint"] == "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M"
+    assert body["backend_label"] == "llamacpp/rocm"
+    assert body["concurrency"]["slots"] == 8
+    assert body["concurrency"]["per_slot_ctx"] == 65536
+    assert body["ctx_drift"]["state"] == "match"
+    assert body["throughput"]["tokens_per_second"] == pytest.approx(60.0, abs=0.1)
+    assert body["throughput"]["requests_total"] == 35
+    # Honest holes are named, not omitted.
+    assert {d["name"] for d in body["deferred"]} >= {"KV-cache type", "Queue saturation"}
+
+
+def test_detail_refuses_fabricated_per_model_rate(client):
+    """A 1e6 tok/s per-model rate (a 1-token response over ~0s) must be flagged,
+    not printed as throughput. Inject it for a model present in health so the
+    endpoint's guard plumbing is exercised (the parser-level guard is covered in
+    test_metrics)."""
+    client.stub.metrics = (
+        f'lemonade_model_tokens_per_second{{model_name="{B26}"}} 1000000\n'
+        f'lemonade_model_output_tokens{{model_name="{B26}"}} 1\n'
+        f'lemonade_model_requests_total{{model_name="{B26}"}} 1\n'
+    )
+    body = client.get(f"/api/v1/models/{B26}/detail").json()
+    assert body["throughput"]["rate_implausible"] is True
+    assert "not a real rate" in body["throughput"]["rate_note"]
+
+
+def test_detail_degrades_when_metrics_fail(client):
+    """A failed /metrics is unavailable throughput, not a 500 — the rest of the
+    payload (identity, concurrency, drift) still ships."""
+    client.stub.metrics_fail = UpstreamError(UpstreamErrorKind.TIMEOUT, "slow")
+    body = client.get(f"/api/v1/models/{B26}/detail").json()
+    assert body["throughput"] is None
+    assert body["concurrency"]["slots"] == 8  # rest survives
+
+
+def test_detail_404_when_not_loaded(client):
+    assert client.get("/api/v1/models/Nope/detail").status_code == 404
 
 
 def test_requires_auth(data_dir):

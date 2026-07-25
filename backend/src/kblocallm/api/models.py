@@ -18,8 +18,9 @@ from urllib.parse import unquote
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel
 
-from ..domain.concurrency import SLOTTED_RECIPES
+from ..domain.concurrency import SLOTTED_RECIPES, ConcurrencyKind, derive_concurrency
 from ..domain.ctx_drift import check_ctx_drift
+from ..domain.metrics import parse_model_metrics
 from ..upstream.client import FAST, LemonadeClient, UpstreamError
 
 logger = logging.getLogger(__name__)
@@ -102,6 +103,158 @@ async def ctx_drift_all(request: Request) -> CtxDriftBatch:
         for m in loaded_llamacpp
     ]
     return CtxDriftBatch(results=rows)
+
+
+class ConcurrencyOut(BaseModel):
+    kind: str
+    display: str
+    slots: int | None = None
+    per_slot_ctx: int | None = None
+    note: str | None = None
+
+
+class ThroughputOut(BaseModel):
+    tokens_per_second: float | None = None
+    rate_implausible: bool = False
+    rate_note: str | None = None
+    time_to_first_token: float | None = None
+    requests_total: int | None = None
+    input_tokens_total: int | None = None
+    output_tokens_total: int | None = None
+
+
+class DeferredField(BaseModel):
+    """A field §1.12 wants but Lemonade does not expose per-model today. Named
+    and explained so the UI renders 'unavailable' with a reason — never a blank
+    that reads as zero, and never a fabricated value."""
+
+    name: str
+    reason: str
+
+
+class DetailOut(BaseModel):
+    model_name: str
+    checkpoint: str | None = None
+    recipe: str | None = None
+    device: str | None = None
+    type: str | None = None
+    loaded: bool = False
+    pinned: bool = False
+    backend_label: str
+    max_context_window: int | None = None
+    port: int | None = None
+    pid: int | None = None
+    concurrency: ConcurrencyOut
+    ctx_drift: CtxDriftOut
+    #: Per-model throughput from /metrics. None when the model has no series
+    #: (never served a request, or a non-llm) — unavailable, not zero.
+    throughput: ThroughputOut | None = None
+    #: Honest holes: what §1.12 asks for that Lemonade cannot answer per-model.
+    deferred: list[DeferredField] = []
+
+
+def _backend_label(record: dict) -> str:
+    recipe = record.get("recipe") or "unknown"
+    backend = (record.get("recipe_options") or {}).get("llamacpp_backend")
+    return f"{recipe}/{backend}" if backend else recipe
+
+
+def _port_from(record: dict) -> int | None:
+    url = record.get("backend_url")
+    if not isinstance(url, str) or ":" not in url:
+        return None
+    try:
+        return int(url.rsplit(":", 1)[1].split("/")[0])
+    except (ValueError, IndexError):
+        return None
+
+
+#: The §1.12 fields that need a Lemonade passthrough (traced to the architect's
+#: ask). Shown as "unavailable" with the reason, so the detail view is honest
+#: about its own edges rather than quietly omitting them.
+_DEFERRED = [
+    DeferredField(name="Queue saturation",
+                  reason="requests_deferred / requests_processing are not in Lemonade's "
+                         "/metrics or /slots — pending the per-model passthrough."),
+    DeferredField(name="KV-cache type",
+                  reason="Lives in llama.cpp's /props, which Lemonade does not proxy."),
+    DeferredField(name="Prefill throughput",
+                  reason="Lemonade reports generation tok/s only; no separate prefill gauge."),
+]
+
+
+async def _read_metrics(client: LemonadeClient):
+    # /metrics is Prometheus text/plain, not JSON — raw=True or the JSON parse
+    # fails and throughput silently vanishes.
+    try:
+        return await client.request("GET", "/metrics", timeout=FAST, raw=True)
+    except UpstreamError as e:
+        logger.info("detail: /metrics read failed: %s", e)
+        return None
+
+
+@router.get("/{model_id:path}/detail", response_model=DetailOut)
+async def detail(model_id: str, request: Request) -> DetailOut:
+    """One normalized, honest per-model payload (14c §1.12).
+
+    Assembles identity + computed concurrency + the running-context drift read +
+    per-model throughput from /metrics, and names the fields Lemonade can't yet
+    answer per-model rather than omitting them. Read-only, on-demand (three
+    upstream reads: /health, /slots, /metrics) — NOT on any poll.
+    """
+    model_id = unquote(model_id)
+    client: LemonadeClient = request.app.state.lemonade
+
+    loaded = await _read_health(client)
+    record = next((m for m in loaded if m.get("model_name") == model_id), None)
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{model_id!r} is not currently loaded.",
+        )
+    loaded_llamacpp = [m for m in loaded if m.get("recipe") in SLOTTED_RECIPES]
+
+    is_llamacpp = record.get("recipe") in SLOTTED_RECIPES
+    slots_payload = await _read_slots(client, model_id) if is_llamacpp else None
+    metrics = parse_model_metrics(await _read_metrics(client))
+
+    conc = derive_concurrency(record)
+    drift = check_ctx_drift(record, loaded_llamacpp, slots_payload)
+
+    tp = metrics.get(model_id)
+    throughput = None
+    if tp is not None:
+        throughput = ThroughputOut(
+            tokens_per_second=tp.tokens_per_second,
+            rate_implausible=tp.rate_implausible,
+            rate_note=tp.rate_note,
+            time_to_first_token=tp.time_to_first_token,
+            requests_total=tp.requests_total,
+            input_tokens_total=tp.input_tokens_total,
+            output_tokens_total=tp.output_tokens_total,
+        )
+
+    opts = record.get("recipe_options") or {}
+    return DetailOut(
+        model_name=model_id,
+        checkpoint=record.get("checkpoint"),
+        recipe=record.get("recipe"),
+        device=record.get("device"),
+        type=record.get("type"),
+        loaded=record.get("loaded") is True,
+        pinned=record.get("pinned") is True or opts.get("pinned") is True,
+        backend_label=_backend_label(record),
+        max_context_window=record.get("max_context_window"),
+        port=_port_from(record),
+        pid=record.get("pid"),
+        concurrency=ConcurrencyOut(
+            kind=conc.kind.value if isinstance(conc.kind, ConcurrencyKind) else str(conc.kind),
+            display=conc.display, slots=conc.slots, per_slot_ctx=conc.per_slot_ctx, note=conc.note,
+        ),
+        ctx_drift=CtxDriftOut(**_out(drift)),
+        throughput=throughput,
+        deferred=_DEFERRED,
+    )
 
 
 @router.get("/{model_id:path}/ctx-check", response_model=CtxDriftOut)

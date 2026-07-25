@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import Library from './pages/Library';
 import Logs from './pages/Logs';
 import Login from './pages/Login';
+import ModelDetailPage from './pages/ModelDetail';
 import Operations from './pages/Operations';
 
 type Tab = 'dashboard' | 'library' | 'advisor' | 'logs' | 'operations';
@@ -35,6 +36,9 @@ export default function App() {
    *  The editor lives in the Library because it needs the catalog record — the
    *  trained context ceiling that /health does not carry. */
   const [focusModelId, setFocusModelId] = useState<string | null>(null);
+  /** Set when the operator opens a model's dedicated detail page. Non-null takes
+   *  over the main area (over whatever tab is active) until they go Back. */
+  const [detailModelId, setDetailModelId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -71,18 +75,29 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh' }}>
       <Header config={config} onLogout={async () => { await api.logout(); await refresh(); }} />
-      <Nav tab={tab} onSelect={(t) => { setFocusModelId(null); setTab(t); }} />
+      <Nav tab={tab} onSelect={(t) => { setFocusModelId(null); setDetailModelId(null); setTab(t); }} />
       <main style={{ padding: '1.5rem', maxWidth: 1400, margin: '0 auto' }}>
         {config && <UpstreamBanner config={config} />}
         <div style={{ marginTop: '1rem' }}>
           {/* `management_enabled` gates every write control. When it's false the
               buttons are ABSENT, not disabled — an Unload that 401s is worse
               than no Unload at all (URSA 1.1.8). */}
+          {detailModelId ? (
+            <ModelDetailPage
+              modelId={detailModelId}
+              managementEnabled={config?.upstream.management_enabled ?? false}
+              onBack={() => setDetailModelId(null)}
+              onConfigure={(modelName) => { setDetailModelId(null); setFocusModelId(modelName); setTab('library'); }}
+              onUpdate={(modelName) => { setDetailModelId(null); setFocusModelId(modelName); setTab('library'); }}
+            />
+          ) : (
+          <>
           {tab === 'dashboard' && (
             <Dashboard
               managementEnabled={config?.upstream.management_enabled ?? false}
               onConfigure={(modelName) => { setFocusModelId(modelName); setTab('library'); }}
               onUpdate={(modelName) => { setFocusModelId(modelName); setTab('library'); }}
+              onOpenDetail={(modelName) => setDetailModelId(modelName)}
             />
           )}
           {tab === 'library' && (
@@ -96,6 +111,8 @@ export default function App() {
           {tab === 'logs' && <Logs />}
           {tab === 'operations' && (
             <Operations managementEnabled={config?.upstream.management_enabled ?? false} />
+          )}
+          </>
           )}
         </div>
       </main>
