@@ -52,7 +52,7 @@ Client-certificate auth happens at Cloudflare's edge, not in NPM.
 **Read this bit:** mTLS protects the *public* path. It is not a perimeter.
 Anything on your LAN, any container on the same Docker network, and the Docker host itself
 reach `helm-web:80` directly without touching Cloudflare. That is why HELM has
-its own operator login — see `HELM_SPEC_REVIEW.md` F1.
+its own operator login.
 
 ---
 
@@ -155,9 +155,9 @@ Test 3 is the one that matters. Tests 1 and 2 pass on a misconfigured stack.
 
 ## 5. If you skip the login (don't, but if you do)
 
-If the decision is ever "Cloudflare mTLS is the only gate" (see
-`HELM_SPEC_REVIEW.md` F1), then **before** setting `HELM_DISABLE_AUTH=true`,
-change the web port binding in `docker-compose.production.yml`:
+If the decision is ever "Cloudflare mTLS is the only gate", then **before**
+setting `HELM_DISABLE_AUTH=true`, change the web port binding in
+`docker-compose.production.yml`:
 
 ```yaml
 ports:

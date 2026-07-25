@@ -90,6 +90,67 @@ Open `http://<this-host>:5080`. The first visit lands on a setup screen — pick
 
 ---
 
+## Configuration
+
+HELM is configured entirely through the **`.env` file sitting next to the compose file** — your container manager (Dockge, Portainer, plain `docker compose`) reads it automatically. Nothing is baked into the images, so the same images run on any box.
+
+### The compose file, explained
+
+This is a complete, minimal `docker-compose.yml`. It's the same as [`infra/docker-compose.production.yml`](infra/docker-compose.production.yml) (which carries extra inline notes); the version-pinned file is best for reproducible deploys, while `:latest` here keeps this example copy-paste-simple.
+
+```yaml
+services:
+  helm-api:                              # the backend (FastAPI + SQLite)
+    image: brain40/helm-api:latest       # or pin a version, e.g. :0.9.7
+    container_name: helm-api
+    user: "${PUID:-1000}:${PGID:-1000}"  # MUST own the ./helm-data dir below (see PUID/PGID)
+    environment:
+      HELM_LEMONADE_URL: ${HELM_LEMONADE_URL:-http://YOUR_LEMONADE_HOST:13305}
+      HELM_LEMONADE_ADMIN_API_KEY: ${HELM_LEMONADE_ADMIN_API_KEY:-}
+      HELM_LEMONADE_API_KEY: ${HELM_LEMONADE_API_KEY:-}
+      HELM_JWT_SECRET: ${HELM_JWT_SECRET:-}
+      HELM_WEB_SEARCH_KEY: ${HELM_WEB_SEARCH_KEY:-}
+      HELM_DATA_DIR: /data
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ./helm-data:/data                # HELM's SQLite, JWT secret, operator hash — BACK THIS UP
+    restart: unless-stopped
+
+  helm-web:                              # the UI (nginx + the SPA; also proxies /api)
+    image: brain40/helm-web:latest
+    container_name: helm-web
+    ports:
+      - "5080:80"                        # open http://<this-host>:5080  (see Ports below)
+    depends_on:
+      - helm-api
+    restart: unless-stopped
+```
+
+`helm-web` reaches `helm-api` by service name over Compose's default network — no extra network needed.
+
+### Environment variables (all live in `.env`)
+
+Copy [`.env.example`](.env.example) to `.env` and edit. Every variable and its expected values:
+
+| Variable | Required? | Example / default | What it does |
+|---|---|---|---|
+| `HELM_LEMONADE_URL` | **Yes** | `http://192.168.1.50:13305` | Where your Lemonade Server listens. If Lemonade is a **host service** (not a container), use the host's **LAN IP**, not a container name. `http://localhost:13305` if it's on the same machine as HELM. |
+| `HELM_LEMONADE_ADMIN_API_KEY` | No | *(empty)* | Gates the write routes (load / unload / pin / delete / config). **Leave empty to run read-only** — a fully supported mode; the dashboard + Advisor work and the write controls are hidden. Set it (from your Lemonade server's config) to enable management. |
+| `HELM_LEMONADE_API_KEY` | No | *(empty)* | Only if you set a **global** `LEMONADE_API_KEY` on the server (it gates *all* routes, including reads, and disables Lemonade's own UI). Most people leave this blank. |
+| `HELM_JWT_SECRET` | No | *(empty)* | **Leave empty.** HELM generates one at `/data/jwt_secret` on first boot and reuses it. Set only if you want to own rotation. |
+| `HELM_WEB_SEARCH_KEY` | No | *(empty)* | A Google **Gemini** API key for the Advisor's grounded web lookups (separate from any model key; free tier is generous — [aistudio.google.com](https://aistudio.google.com)). Empty = the Advisor runs without live lookups and says so. |
+| `PUID` / `PGID` | Recommended | `1000` / `1000` | The uid:gid that `helm-api` runs as. **Must match the owner of the host `./helm-data` directory**, or SQLite can't write and the container refuses to boot. Check with `id <your-user>`. Not the LinuxServer.io convention — this feeds Compose's `user:` directive directly. |
+| `TZ` | No | `UTC` | Container **log** timestamps only. HELM stores UTC internally and the UI renders in the browser's timezone; this changes no stored data. |
+
+### Ports, data, and backup
+
+- **Port** — the UI is on `5080` (`"5080:80"`). Change the left number to move it. To bind localhost-only (e.g. behind a reverse proxy), use `"127.0.0.1:5080:80"`.
+- **Data volume** — `./helm-data:/data` holds HELM's SQLite DB, the JWT secret, and the operator password hash. **It has no other source of truth — back it up.** The container side must stay `/data`.
+- **First run** — open `http://<this-host>:5080`, set an operator password (≥12 chars, no recovery — store it in a password manager). No key ceremony; the JWT secret is generated for you.
+- **Behind a reverse proxy / mTLS?** See [infra/npm-mtls-ingress.md](infra/npm-mtls-ingress.md) — including the streaming config that trips everyone up.
+
+---
+
 ## Documentation
 
 | Doc | What's in it |

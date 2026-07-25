@@ -38,3 +38,7 @@ PER_MODEL_DETAIL_PROPOSAL.md
 
 # Raw screenshot dump (curated copies live in docs/screenshots/)
 /Screenshots/
+
+# Internal artifacts — keep local, never publish
+/HELM_SPEC_REVIEW.md
+/docs/lemonade-affinity-findings.md
