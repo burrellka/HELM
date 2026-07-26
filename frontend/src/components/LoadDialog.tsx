@@ -126,6 +126,14 @@ export default function LoadDialog({ entry, prefill, mode = 'load', onClose, onD
         setFailure(`${result.error_kind}: ${result.error_detail}`);
         return;
       }
+      if (result.verified === false) {
+        // Lemonade accepted the reload but came back running DIFFERENT options
+        // than we sent (the --parallel-drop case). Do NOT report success or
+        // close: a silent no-op is exactly what this dialog must stop doing.
+        setFailure(result.verify_note
+          ?? 'The reload was accepted, but the running options do not match what you set — the change did not take.');
+        return;
+      }
       onDone();
     } catch (e) {
       if (e instanceof ApiError && (e.status === 409 || e.status === 422)) {

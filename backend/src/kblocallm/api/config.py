@@ -186,8 +186,12 @@ async def apply_model_config(
     backup_id = ConfigBackupStore(request.app.state.db).save(
         f"model:{model_id}", json.dumps(running, indent=2), reason="apply")
 
+    # /api/v1/load takes recipe options as TOP-LEVEL fields (ctx_size,
+    # llamacpp_args, …), not nested under `recipe_options` — that is the /health
+    # RESPONSE shape, not the request shape. Spread the edited options onto the
+    # body, or Lemonade ignores them and the edit silently no-ops.
     load_body: dict[str, Any] = {
-        "model_name": model_id, "recipe_options": v.parsed, "save_options": True,
+        "model_name": model_id, "save_options": True, **v.parsed,
     }
     if catalog.get("recipe"):
         load_body["recipe"] = catalog["recipe"]
@@ -387,10 +391,12 @@ async def restore_backup(backup_id: int, request: Request, confirm: bool = False
     except UpstreamError:
         pass
 
+    # Top-level fields, not nested under recipe_options (Lemonade's load request
+    # shape — see apply_model_config above).
     load_body: dict[str, Any] = {
         "model_name": model_id,
-        "recipe_options": json.loads(backup.content),
         "save_options": True,
+        **json.loads(backup.content),
     }
     if catalog_recipe:
         load_body["recipe"] = catalog_recipe

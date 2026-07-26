@@ -467,3 +467,33 @@ def test_jobs_endpoint_is_empty_when_nothing_is_downloading(app_client):
     app_client.stub.downloads = []
     r = app_client.get("/api/v1/library/jobs").json()
     assert r["active_count"] == 0 and r["active"] == []
+
+
+# ── read-back verification of load options (the --parallel-drop safety net) ──
+
+def test_load_flags_when_options_do_not_take(app_client):
+    """The bug that ran silent for days: Lemonade accepts the reload but comes
+    back running different options. `performed` is True, but `verified` must be
+    False with a note — never a silent success. The stub's /health keeps the
+    26B at --parallel 8, so asking for 2 slots is a mismatch it must catch."""
+    r = app_client.post("/api/v1/control/load?confirm=true", json={
+        "model_name": "Gemma-4-26B-A4B-it-MTP-GGUF", "recipe": "llamacpp",
+        "slots": 2, "ctx_per_slot": 65536, "save_options": True,
+    })
+    body = r.json()
+    assert body["performed"] is True
+    assert body["verified"] is False
+    assert "slots" in (body["verify_note"] or "")
+
+
+def test_load_verified_true_when_options_match(app_client):
+    """Requesting the 26B's actual running config (8 slots x 64K) reads back
+    clean, so verified is True and there is no warning."""
+    r = app_client.post("/api/v1/control/load?confirm=true", json={
+        "model_name": "Gemma-4-26B-A4B-it-MTP-GGUF", "recipe": "llamacpp",
+        "slots": 8, "ctx_per_slot": 65536, "save_options": True,
+    })
+    body = r.json()
+    assert body["performed"] is True
+    assert body["verified"] is True
+    assert body["verify_note"] is None

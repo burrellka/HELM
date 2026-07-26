@@ -311,6 +311,11 @@ export interface ActionResult {
   result?: unknown;
   error_kind?: string | null;
   error_detail?: string | null;
+  /** Read-back of a load's OPTIONS. `performed` only means Lemonade accepted the
+   *  reload; `verified === false` means it came back running DIFFERENT options
+   *  than were sent (e.g. a dropped --parallel). null = nothing to verify. */
+  verified?: boolean | null;
+  verify_note?: string | null;
 }
 
 export interface LoadRequest {

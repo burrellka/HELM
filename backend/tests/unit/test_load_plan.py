@@ -33,8 +33,8 @@ def test_helm_does_the_ctx_multiplication_not_the_operator():
     That translation is HELM's whole job here (§5.3)."""
     plan = plan_load(LoadIntent(model_name="m", recipe="llamacpp", slots=8, ctx_per_slot=65536))
     assert plan.computed_ctx_size == 524288
-    assert plan.body["recipe_options"]["ctx_size"] == 524288
-    assert plan.body["recipe_options"]["llamacpp_args"] == "--parallel 8"
+    assert plan.body["ctx_size"] == 524288
+    assert plan.body["llamacpp_args"] == "--parallel 8"
     assert not plan.blocked
 
 
@@ -138,7 +138,7 @@ def test_harmless_args_pass_through():
         model_name="m", recipe="llamacpp", slots=2, extra_args="--temp 1.0 --top-k 64",
     ))
     assert not plan.blocked
-    assert plan.body["recipe_options"]["llamacpp_args"] == "--parallel 2 --temp 1.0 --top-k 64"
+    assert plan.body["llamacpp_args"] == "--parallel 2 --temp 1.0 --top-k 64"
 
 
 def test_parallel_in_both_places_is_refused_rather_than_silently_resolved():
@@ -162,7 +162,7 @@ def test_sampling_fields_compose_into_llamacpp_args():
         temperature=0.7, top_k=40, top_p=0.9, min_p=0.05, repeat_penalty=1.1,
     ))
     assert not plan.blocked
-    assert plan.body["recipe_options"]["llamacpp_args"] == (
+    assert plan.body["llamacpp_args"] == (
         "--parallel 2 --temp 0.7 --top-k 40 --top-p 0.9 --min-p 0.05 --repeat-penalty 1.1"
     )
 
@@ -173,7 +173,7 @@ def test_a_whole_number_sampling_value_has_no_trailing_dot_zero():
     plan = plan_load(LoadIntent(
         model_name="m", recipe="llamacpp", slots=1, temperature=1.0, repeat_penalty=1.0,
     ))
-    args = plan.body["recipe_options"]["llamacpp_args"]
+    args = plan.body["llamacpp_args"]
     assert "--temp 1 " in args + " " and "--repeat-penalty 1" in args
     assert "1.0" not in args
 
@@ -182,7 +182,7 @@ def test_unset_sampling_fields_emit_nothing():
     """Empty field = leave unset = the flag is absent. A blank temp box must not
     become `--temp 0` or `--temp None`."""
     plan = plan_load(LoadIntent(model_name="m", recipe="llamacpp", slots=2))
-    assert plan.body["recipe_options"]["llamacpp_args"] == "--parallel 2"
+    assert plan.body["llamacpp_args"] == "--parallel 2"
 
 
 def test_a_sampling_param_in_both_field_and_raw_args_is_refused():
@@ -204,7 +204,7 @@ def test_a_sampling_param_only_in_raw_args_still_passes():
         model_name="m", recipe="llamacpp", slots=1, extra_args="--temp 0.2",
     ))
     assert not plan.blocked
-    assert plan.body["recipe_options"]["llamacpp_args"] == "--parallel 1 --temp 0.2"
+    assert plan.body["llamacpp_args"] == "--parallel 1 --temp 0.2"
 
 
 # -- slots are llamacpp-only -----------------------------------------------
@@ -227,8 +227,8 @@ def test_slots_on_whispercpp_are_blocked_too():
 def test_an_npu_load_still_sets_ctx_without_slots():
     plan = plan_load(LoadIntent(model_name="m", recipe="flm", ctx_per_slot=131072))
     assert not plan.blocked
-    assert plan.body["recipe_options"]["ctx_size"] == 131072
-    assert "llamacpp_args" not in plan.body.get("recipe_options", {})
+    assert plan.body["ctx_size"] == 131072
+    assert "llamacpp_args" not in plan.body
 
 
 @pytest.mark.parametrize("slots", [0, -1])
@@ -252,9 +252,9 @@ def test_we_do_not_pretend_to_estimate_memory(health):
 # -- body shape ------------------------------------------------------------
 
 
-def test_pinned_rides_in_recipe_options():
+def test_pinned_is_top_level():
     plan = plan_load(LoadIntent(model_name="m", recipe="llamacpp", pinned=True))
-    assert plan.body["recipe_options"]["pinned"] is True
+    assert plan.body["pinned"] is True
 
 
 def test_save_options_is_explicit():

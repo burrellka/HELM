@@ -37,10 +37,14 @@ class StubClient:
         if self.fail_with is not None and method == "POST" and "/load" in path:
             raise self.fail_with
         if path == "/api/v1/load":
-            # Reflect the applied options into /health so the read-back sees them.
-            opts = (json_body or {}).get("recipe_options", {})
+            # The load request carries options as TOP-LEVEL fields; /health
+            # REPORTS them nested under recipe_options. Reflect the top-level
+            # option fields into health so the read-back sees them.
+            b = json_body or {}
+            opts = {k: b[k] for k in ("ctx_size", "llamacpp_args", "llamacpp_backend", "pinned")
+                    if k in b}
             for m in self.health.get("all_models_loaded") or []:
-                if m.get("model_name") == json_body.get("model_name"):
+                if m.get("model_name") == b.get("model_name"):
                     m["recipe_options"] = opts
             return {"ok": True}
         if path.endswith("/health"):
@@ -130,7 +134,7 @@ def test_apply_verifies_by_read_back(client):
     assert r.json()["verified"] is True
     sent = next(s for s in client.stub.sent if s[1] == "/api/v1/load")
     assert sent[2]["save_options"] is True
-    assert sent[2]["recipe_options"]["ctx_size"] == 262144
+    assert sent[2]["ctx_size"] == 262144
 
 
 def test_a_blocked_edit_never_reaches_apply(client):
@@ -160,7 +164,7 @@ def test_restore_replays_a_backup(client):
     assert r.status_code == 200 and r.json()["restored"] is True
     # It reloaded with the backed-up (original 524288) options.
     last_load = [s for s in client.stub.sent if s[1] == "/api/v1/load"][-1]
-    assert last_load[2]["recipe_options"]["ctx_size"] == 524288
+    assert last_load[2]["ctx_size"] == 524288
 
 
 def test_restore_needs_confirmation(client):

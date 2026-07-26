@@ -27,6 +27,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
+from ..domain.llamacpp_args import parallel_slots
 from ..domain.load_plan import LoadIntent, LoadPlan, Level, plan_load, plan_unload
 from ..upstream.client import CONTROL, FAST, LemonadeClient, UpstreamError
 
@@ -64,6 +65,14 @@ class ActionOut(BaseModel):
     #: Populated when the upstream refused. Keeps the KIND (house rule #5).
     error_kind: str | None = None
     error_detail: str | None = None
+    #: Read-back verification of a load's OPTIONS (slots / ctx). `performed`
+    #: only means "Lemonade accepted the reload" — it can accept the call and
+    #: come back running DIFFERENT options (e.g. dropping --parallel). None when
+    #: there was nothing to verify (no recipe_options sent) or the read-back
+    #: itself failed; True/False otherwise. This is the guard that turns a silent
+    #: no-op into a visible failure.
+    verified: bool | None = None
+    verify_note: str | None = None
 
 
 class LoadBody(BaseModel):
@@ -198,7 +207,59 @@ async def load(body: LoadBody, request: Request, confirm: bool = False) -> Actio
             "Operator load of %s will evict NPU incumbent(s): %s",
             body.model_name, ", ".join(plan.evicts),
         )
-    return await _perform(client, "/api/v1/load", plan.body, out)
+    action = await _perform(client, "/api/v1/load", plan.body, out)
+    # 'performed' means Lemonade accepted the reload — NOT that it applied our
+    # options. It can accept the call and reload with different args. Read back
+    # and say so, rather than reporting a silent no-op as success. Only when we
+    # actually sent options (top-level fields) to check.
+    if action.performed and any(k in plan.body for k in ("ctx_size", "llamacpp_args")):
+        action.verified, action.verify_note = await _verify_load(
+            client, body.model_name, plan.body)
+    return action
+
+
+async def _verify_load(
+    client: LemonadeClient, model_name: str, sent_body: dict,
+) -> tuple[bool | None, str | None]:
+    """Confirm the running model reflects the slots/ctx we sent.
+
+    Returns (verified, note). None means "could not verify" (read-back failed) —
+    never silently True. Compares ctx_size directly and the slot count via the
+    shared F4 parser, so a dropped or altered `--parallel` is caught. `sent_body`
+    carries options as TOP-LEVEL fields (Lemonade's load-request shape); /health
+    REPORTS them nested under recipe_options, which is what we read back.
+    """
+    sent = sent_body
+    try:
+        health = await client.request("GET", "/api/v1/health", timeout=FAST)
+    except UpstreamError:
+        return None, ("Could not read back the running config, so HELM cannot confirm the "
+                      "change took. Re-open Settings to see the current running options.")
+    record = next((m for m in (health.get("all_models_loaded") or [])
+                   if isinstance(m, dict) and m.get("model_name") == model_name), None)
+    if record is None:
+        return False, "The model is not loaded after the apply — the change did not take."
+    running = record.get("recipe_options") or {}
+
+    mismatches: list[str] = []
+    if "ctx_size" in sent and running.get("ctx_size") != sent["ctx_size"]:
+        mismatches.append(
+            f"total context (asked {sent['ctx_size']:,}, running {running.get('ctx_size')})")
+    sent_par = parallel_slots(sent.get("llamacpp_args"))
+    run_par = parallel_slots(running.get("llamacpp_args"))
+    if sent_par.ok and (not run_par.ok or run_par.value != sent_par.value):
+        got = run_par.value if run_par.ok else "none (default 1)"
+        mismatches.append(f"slots (asked --parallel {sent_par.value}, running {got})")
+
+    if mismatches:
+        return False, (
+            "Lemonade reloaded the model but came back running DIFFERENT options than you set — "
+            "the change did not fully take: " + "; ".join(mismatches) + ". "
+            "Locally-defined models, or Lemonade's own arg re-derivation, can strip settings on "
+            "load; setting them via `lemonade load --llamacpp-args=… --save-options` is the "
+            "reliable path until this is resolved."
+        )
+    return True, None
 
 
 @router.post("/unload", response_model=ActionOut)

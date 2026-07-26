@@ -260,20 +260,23 @@ def plan_load(
     # product exists to avoid. State the headroom, which IS known, and stop.
     issues.append(_headroom_note(health))
 
+    # Lemonade's POST /api/v1/load takes ctx_size / llamacpp_args / llamacpp_backend
+    # / pinned as **TOP-LEVEL** fields — NOT nested under `recipe_options`. That
+    # nesting is the shape /health REPORTS back, not the shape the load request
+    # ACCEPTS. Nesting them (as HELM did) meant Lemonade never saw them, found no
+    # --parallel at the highest-priority load-request level, and fell back to the
+    # default 1 slot. This is the slot/config bug. Fields go on `body` directly.
     body: dict[str, Any] = {"model_name": intent.model_name}
-    options: dict[str, Any] = {}
     if ctx_size is not None:
-        options["ctx_size"] = ctx_size
+        body["ctx_size"] = ctx_size
     if is_slotted:
         args = _compose_args(intent, slots)
         if args:
-            options["llamacpp_args"] = args
+            body["llamacpp_args"] = args
         if intent.llamacpp_backend:
-            options["llamacpp_backend"] = intent.llamacpp_backend
+            body["llamacpp_backend"] = intent.llamacpp_backend
     if intent.pinned:
-        options["pinned"] = True
-    if options:
-        body["recipe_options"] = options
+        body["pinned"] = True
     if recipe:
         body["recipe"] = recipe
     if intent.save_options:

@@ -5,7 +5,7 @@ name = "kblocallm"
 # container reports its OWN version rather than reading an env var, so
 # "which image is actually running" is always answerable (URSA 1.1.3).
 # Keep this in step with the compose image tags.
-version = "0.9.7"
+version = "0.9.8"
 description = "HELM — AI fleet control plane over Lemonade Server"
 requires-python = ">=3.12"
 dependencies = [
