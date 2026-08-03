@@ -137,7 +137,7 @@ Full background on the streaming/keepalive mechanics: `docs/ARCHITECTURE.md`
 # 1. Reachable, and mTLS is actually enforced.
 curl -sS https://helm.example.com/healthz            # -> blocked (no client cert)
 curl -sS --cert client.pem https://helm.example.com/healthz
-# -> {"ok":true,"version":"0.9.8"}
+# -> {"ok":true,"version":"0.9.9"}
 
 # 2. Streaming is NOT buffered. Lines must appear as they happen. If they all
 #    arrive at once at the end, something in the chain is still buffering.

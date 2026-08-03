@@ -415,6 +415,17 @@ export interface Library {
   unmatched_loaded: string[];
 }
 
+/** One HuggingFace search hit (a downloadable GGUF model not necessarily in
+ *  your catalog). Mirrors backend/api/library.py HFHit. */
+export interface HFHit {
+  id: string;
+  downloads: number | null;
+  likes: number | null;
+  updated: string | null;
+  url: string;
+  suggested_name: string;
+}
+
 export interface LibraryQuery {
   text?: string;
   labels?: string;
@@ -679,6 +690,12 @@ export const api = {
   // ── library ───────────────────────────────────────────────────────────────
 
   library: (query: LibraryQuery = {}) => request<Library>(`/library${qs(query)}`),
+
+  /** Live HuggingFace GGUF search — the discovery Lemonade's UI has and HELM's
+   *  catalog-only search lacks. Queries HF directly (no Lemonade proxy exists). */
+  hfSearch: (query: string) =>
+    request<{ query: string; results: HFHit[]; error: string | null }>(
+      `/library/hf-search${qs({ query })}`),
 
   updateMetadata: (modelId: string, patch: MetadataPatch) =>
     request<Record<string, unknown>>(`/library/${encodeURIComponent(modelId)}/metadata`, {

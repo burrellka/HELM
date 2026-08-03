@@ -23,6 +23,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   api,
   type Drift,
+  type HFHit,
   type LibraryEntry,
   type LibraryQuery,
   type Library as LibraryData,
@@ -80,6 +81,9 @@ export default function Library({ managementEnabled, focusModelId }: {
   const [pulling, setPulling] = useState<{ entry: LibraryEntry; mode: 'download' | 'update' } | null>(null);
   /** Which side of the drift the editor opens on: what's running, or what's saved. */
   const [prefillSide, setPrefillSide] = useState<'running' | 'saved'>('running');
+  /** Live HuggingFace discovery for the current search term (null = not searched). */
+  const [hf, setHf] = useState<{ results: HFHit[]; error: string | null } | null>(null);
+  const [hfBusy, setHfBusy] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -94,6 +98,27 @@ export default function Library({ managementEnabled, focusModelId }: {
     const id = setTimeout(() => void refresh(), 200);  // debounce typing
     return () => clearTimeout(id);
   }, [refresh]);
+
+  // Live HuggingFace search alongside the catalog (Lemonade's UI does this; our
+  // catalog-only search was the "0 results" surprise). Its own slower debounce —
+  // it's an external call — and only for real search terms.
+  useEffect(() => {
+    const text = (query.text ?? '').trim();
+    if (text.length < 2) { setHf(null); setHfBusy(false); return; }
+    setHfBusy(true);
+    let live = true;
+    const id = setTimeout(async () => {
+      try {
+        const r = await api.hfSearch(text);
+        if (live) setHf({ results: r.results, error: r.error });
+      } catch (e) {
+        if (live) setHf({ results: [], error: e instanceof Error ? e.message : String(e) });
+      } finally {
+        if (live) setHfBusy(false);
+      }
+    }, 450);
+    return () => { live = false; clearTimeout(id); };
+  }, [query.text]);
 
   const set = (patch: Partial<LibraryQuery>) => setQuery((q) => ({ ...q, ...patch }));
 
@@ -136,9 +161,25 @@ export default function Library({ managementEnabled, focusModelId }: {
           />
         ))}
         {data?.entries.length === 0 && (
-          <div className="card"><span className="stat-sub">No models match.</span></div>
+          <div className="card"><span className="stat-sub">
+            No models in your catalog match{(query.text ?? '').trim() ? ` "${query.text}"` : ''}.
+          </span></div>
         )}
       </div>
+
+      {(query.text ?? '').trim().length >= 2 && (
+        <HuggingFaceResults
+          hf={hf}
+          busy={hfBusy}
+          managementEnabled={managementEnabled}
+          catalogCheckpoints={new Set(
+            (data?.entries ?? [])
+              .map((e) => (e.checkpoint ?? '').split(':')[0])
+              .filter(Boolean),
+          )}
+          onDownloaded={refresh}
+        />
+      )}
 
       {editing && (
         <MetadataDialog entry={editing} onClose={() => setEditing(null)}
@@ -173,6 +214,91 @@ export default function Library({ managementEnabled, focusModelId }: {
           onStarted={() => { setPulling(null); void refresh(); }}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Live HuggingFace discovery, shown under the catalog results — the capability
+ * Lemonade's own search has and HELM's catalog-only search didn't (the "0 of
+ * 162" surprise). A failed HF call is a visible "couldn't search", never a
+ * silent empty list that reads as "nothing exists".
+ */
+function HuggingFaceResults({ hf, busy, managementEnabled, catalogCheckpoints, onDownloaded }: {
+  hf: { results: HFHit[]; error: string | null } | null;
+  busy: boolean;
+  managementEnabled: boolean;
+  catalogCheckpoints: Set<string>;
+  onDownloaded: () => void;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div className="stat-sub" style={{
+        textTransform: 'uppercase', letterSpacing: '0.02em', fontWeight: 600, marginTop: '0.5rem',
+      }}>
+        From HuggingFace{busy && <span style={{ fontWeight: 400 }}> · searching…</span>}
+      </div>
+      {hf?.error && (
+        <Callout tone="warn" title="Couldn't search HuggingFace">
+          {hf.error} — this doesn't affect your catalog results above.
+        </Callout>
+      )}
+      {hf && !hf.error && hf.results.length === 0 && !busy && (
+        <div className="card"><span className="stat-sub">No GGUF models on HuggingFace match.</span></div>
+      )}
+      {hf?.results.map((h) => (
+        <HFResultRow key={h.id} hit={h} managementEnabled={managementEnabled}
+          alreadyInCatalog={catalogCheckpoints.has(h.id)} onDownloaded={onDownloaded} />
+      ))}
+    </div>
+  );
+}
+
+function HFResultRow({ hit, managementEnabled, alreadyInCatalog, onDownloaded }: {
+  hit: HFHit; managementEnabled: boolean; alreadyInCatalog: boolean; onDownloaded: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+
+  const download = async () => {
+    setBusy(true); setNote(null);
+    try {
+      // Pull under a user.* name with the HF repo as checkpoint — the custom-model
+      // path Lemonade's /pull already supports. Surface whatever it says back
+      // (started, warnings, or an error) rather than assuming success.
+      const r = await api.pull(hit.suggested_name, hit.id);
+      setNote(`Download started as ${hit.suggested_name}. Watch the header indicator.`
+        + (r.warnings?.length ? ' ' + r.warnings.join(' ') : ''));
+      onDownloaded();
+    } catch (e) {
+      setNote(`Could not start the download: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="card" style={{
+      display: 'flex', alignItems: 'center', gap: '1rem',
+      justifyContent: 'space-between', flexWrap: 'wrap',
+    }}>
+      <div style={{ minWidth: 0 }}>
+        <a href={hit.url} target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>{hit.id}</a>
+        <div className="stat-sub" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {hit.downloads != null && <span>↓ {hit.downloads.toLocaleString()}</span>}
+          {hit.likes != null && hit.likes > 0 && <span>♥ {hit.likes}</span>}
+          <span>GGUF</span>
+        </div>
+        {note && <div className="stat-sub" style={{ marginTop: '0.25rem' }}>{note}</div>}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+        {alreadyInCatalog
+          ? <span className="stat-sub">already in your library</span>
+          : managementEnabled
+            ? <button type="button" className="btn-secondary" disabled={busy}
+                onClick={() => void download()}>{busy ? 'Starting…' : 'Download'}</button>
+            : <a href={hit.url} target="_blank" rel="noreferrer" className="btn-secondary">View on HF</a>}
+      </div>
     </div>
   );
 }

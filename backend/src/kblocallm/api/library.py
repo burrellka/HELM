@@ -16,6 +16,7 @@ import logging
 import time
 from typing import Any
 
+import httpx
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
@@ -308,6 +309,71 @@ class PullBody(BaseModel):
     model_name: str
     checkpoint: str | None = None
     recipe: str | None = None
+
+
+HF_MODELS_API = "https://huggingface.co/api/models"
+
+
+class HFHit(BaseModel):
+    id: str
+    downloads: int | None = None
+    likes: int | None = None
+    updated: str | None = None
+    url: str
+    #: Default `user.`-prefixed name HELM would pull this under (Lemonade
+    #: reserves non-user names for its own catalog).
+    suggested_name: str
+
+
+class HFSearchOut(BaseModel):
+    query: str
+    results: list[HFHit] = Field(default_factory=list)
+    #: A network/HF failure is "could not search", not "no results" — the UI
+    #: must not render an error as an empty catalog.
+    error: str | None = None
+
+
+@router.get("/hf-search", response_model=HFSearchOut)
+async def hf_search(query: str) -> HFSearchOut:
+    """Discover downloadable GGUF models on HuggingFace — parity with Lemonade's
+    own search, which HELM's catalog-only search doesn't cover.
+
+    Lemonade exposes no proxy for this (probed: all 404), so — exactly like the
+    Advisor's model-card fetch — HELM queries HuggingFace's public API directly.
+    Read-only, no admin key. `filter=gguf` keeps it to models Lemonade can
+    actually run; sorted by downloads so the useful ones surface first.
+    """
+    q = query.strip()
+    if len(q) < 2:
+        return HFSearchOut(query=query)
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
+            resp = await client.get(
+                HF_MODELS_API,
+                params={"search": q, "filter": "gguf", "sort": "downloads",
+                        "direction": -1, "limit": 25},
+                headers={"User-Agent": "HELM-control-plane"},
+            )
+    except httpx.HTTPError as e:
+        return HFSearchOut(query=query, error=f"Could not reach HuggingFace: {e}")
+    if resp.status_code != 200:
+        return HFSearchOut(query=query, error=f"HuggingFace returned {resp.status_code}.")
+
+    hits: list[HFHit] = []
+    for m in resp.json():
+        rid = m.get("id") or m.get("modelId")
+        if not rid:
+            continue
+        base = rid.split("/")[-1]
+        hits.append(HFHit(
+            id=rid,
+            downloads=m.get("downloads"),
+            likes=m.get("likes"),
+            updated=m.get("lastModified"),
+            url=f"https://huggingface.co/{rid}",
+            suggested_name=f"user.{base}",
+        ))
+    return HFSearchOut(query=query, results=hits)
 
 
 @router.post("/pull")
