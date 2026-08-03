@@ -23,6 +23,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   api,
   type Drift,
+  type HFDetail,
   type HFHit,
   type LibraryEntry,
   type LibraryQuery,
@@ -259,13 +260,23 @@ function HFResultRow({ hit, managementEnabled, alreadyInCatalog, onDownloaded }:
 }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [detail, setDetail] = useState<HFDetail | null>(null);
+  const [detailErr, setDetailErr] = useState<string | null>(null);
+
+  // Fetch the pre-download read (card + per-quant fit) lazily, on first expand.
+  useEffect(() => {
+    if (!open || detail || detailErr) return;
+    let live = true;
+    api.hfDetail(hit.id)
+      .then((d) => { if (live) setDetail(d); })
+      .catch((e) => { if (live) setDetailErr(e instanceof Error ? e.message : String(e)); });
+    return () => { live = false; };
+  }, [open, hit.id, detail, detailErr]);
 
   const download = async () => {
     setBusy(true); setNote(null);
     try {
-      // Pull under a user.* name with the HF repo as checkpoint — the custom-model
-      // path Lemonade's /pull already supports. Surface whatever it says back
-      // (started, warnings, or an error) rather than assuming success.
       const r = await api.pull(hit.suggested_name, hit.id);
       setNote(`Download started as ${hit.suggested_name}. Watch the header indicator.`
         + (r.warnings?.length ? ' ' + r.warnings.join(' ') : ''));
@@ -278,26 +289,88 @@ function HFResultRow({ hit, managementEnabled, alreadyInCatalog, onDownloaded }:
   };
 
   return (
-    <div className="card" style={{
-      display: 'flex', alignItems: 'center', gap: '1rem',
-      justifyContent: 'space-between', flexWrap: 'wrap',
-    }}>
-      <div style={{ minWidth: 0 }}>
-        <a href={hit.url} target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>{hit.id}</a>
-        <div className="stat-sub" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {hit.downloads != null && <span>↓ {hit.downloads.toLocaleString()}</span>}
-          {hit.likes != null && hit.likes > 0 && <span>♥ {hit.likes}</span>}
-          <span>GGUF</span>
+    <div className="card">
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '1rem',
+        justifyContent: 'space-between', flexWrap: 'wrap',
+      }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
+              title={open ? 'Hide details' : 'Show the model card and per-quant fit'}
+              style={{ cursor: 'pointer', border: 'none', background: 'none',
+                color: 'var(--text-secondary)', padding: 0, fontSize: '0.75rem', width: '1rem' }}>
+              {open ? '▾' : '▸'}
+            </button>
+            <a href={hit.url} target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>{hit.id}</a>
+          </div>
+          <div className="stat-sub" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginLeft: '1.5rem' }}>
+            {hit.downloads != null && <span>↓ {hit.downloads.toLocaleString()}</span>}
+            {hit.likes != null && hit.likes > 0 && <span>♥ {hit.likes}</span>}
+            <span>GGUF</span>
+          </div>
+          {note && <div className="stat-sub" style={{ marginTop: '0.25rem', marginLeft: '1.5rem' }}>{note}</div>}
         </div>
-        {note && <div className="stat-sub" style={{ marginTop: '0.25rem' }}>{note}</div>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+          {alreadyInCatalog
+            ? <span className="stat-sub">already in your library</span>
+            : managementEnabled
+              ? <button type="button" className="btn-secondary" disabled={busy}
+                  onClick={() => void download()}>{busy ? 'Starting…' : 'Download'}</button>
+              : <a href={hit.url} target="_blank" rel="noreferrer" className="btn-secondary">View on HF</a>}
+        </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-        {alreadyInCatalog
-          ? <span className="stat-sub">already in your library</span>
-          : managementEnabled
-            ? <button type="button" className="btn-secondary" disabled={busy}
-                onClick={() => void download()}>{busy ? 'Starting…' : 'Download'}</button>
-            : <a href={hit.url} target="_blank" rel="noreferrer" className="btn-secondary">View on HF</a>}
+
+      {open && (
+        <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)' }}>
+          {detailErr && <span className="unknown">Couldn't load details: {detailErr}</span>}
+          {!detail && !detailErr && <span className="stat-sub">Reading model card and sizes…</span>}
+          {detail && <HFDetailBody detail={detail} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The pre-download read: per-quant size + grounded fit against your pool, then
+ *  the model's own HF README. Fit uses the same math as the Advisor, so a quant
+ *  that won't fit says so honestly before you spend the download. */
+function HFDetailBody({ detail }: { detail: HFDetail }) {
+  const fitColor = (v: string | null) =>
+    v === 'too_big' ? 'var(--status-bad)'
+      : v === 'fits_if_evict' ? 'var(--status-warn)'
+      : v === 'fits_resident' ? 'var(--status-good)' : undefined;
+  const fitLabel = (v: string | null) =>
+    v === 'too_big' ? "won't fit"
+      : v === 'fits_if_evict' ? 'fits if something evicts'
+      : v === 'fits_resident' ? 'fits now'
+      : 'fit unknown';
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      {detail.files.length > 0 && (
+        <div>
+          <div className="stat-sub" style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+            Quants & fit{detail.pool_gb != null && <span style={{ fontWeight: 400 }}> · against your {detail.pool_gb.toFixed(0)} GB pool</span>}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.8125rem' }}>
+            {detail.files.map((f) => (
+              <div key={f.filename} style={{ display: 'flex', gap: '1rem', alignItems: 'baseline' }}>
+                <span className="mono" style={{ minWidth: 90 }}>{f.quant ?? f.filename}</span>
+                <span className="tabular" style={{ minWidth: 70 }}>
+                  {f.size_gb != null ? `${f.size_gb.toFixed(2)} GB` : '—'}
+                </span>
+                <span title={f.fit_detail ?? undefined}
+                  style={{ color: fitColor(f.fit_verdict), fontWeight: 500 }}>{fitLabel(f.fit_verdict)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <div>
+        <div className="stat-sub" style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Model card</div>
+        {detail.card
+          ? <div style={{ maxHeight: 360, overflowY: 'auto' }}><Markdown>{detail.card}</Markdown></div>
+          : <span className="stat-sub">{detail.card_note ?? 'No model card.'}</span>}
       </div>
     </div>
   );

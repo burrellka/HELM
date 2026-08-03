@@ -21,9 +21,11 @@ from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from ..advisor_service import HFMetadataService, ModelSourceStore
+from ..domain.advisor import compute_fit, decode_quant
 from ..domain.drift import DriftReport
 from ..domain.hf_resolve import RepoConfidence, resolve_repo
 from ..domain.library import LabelJoin, build_library, search, unmatched_loaded_models
+from ..domain.pool import extract_pool
 from ..storage.metadata import MetadataStore
 from ..upstream.client import CONTROL, FAST, TRANSFER, LemonadeClient, UpstreamError
 
@@ -374,6 +376,87 @@ async def hf_search(query: str) -> HFSearchOut:
             suggested_name=f"user.{base}",
         ))
     return HFSearchOut(query=query, results=hits)
+
+
+class HFFile(BaseModel):
+    filename: str
+    quant: str | None = None
+    size_gb: float | None = None
+    #: Grounded fit against the DETECTED pool (same math the Advisor uses on your
+    #: own models), so you can decide before downloading. None when unknowable.
+    fit_verdict: str | None = None
+    fit_detail: str | None = None
+
+
+class HFDetailOut(BaseModel):
+    repo: str
+    #: The HF README — the model's own words, not an invented description.
+    card: str | None = None
+    card_note: str | None = None
+    files: list[HFFile] = Field(default_factory=list)
+    pool_gb: float | None = None
+    used_gb: float | None = None
+
+
+@router.get("/hf-detail", response_model=HFDetailOut)
+async def hf_detail(repo: str, request: Request) -> HFDetailOut:
+    """Pre-download read for a HuggingFace hit — the honest, grounded subset of
+    the Library's per-model capability that CAN apply before you own the model:
+    the HF model card (its own README) plus, per GGUF quant, the file size and a
+    fit verdict against your detected pool (the same `compute_fit` math used on
+    your resident models). No LLM synthesis on ungrounded metadata — quant + fit
+    are deterministic, and the card is the model's own text.
+    """
+    client: LemonadeClient = request.app.state.lemonade
+
+    card: str | None = None
+    try:
+        card = await HFMetadataService(request.app.state.db).fetch_card(repo)
+    except Exception:  # noqa: BLE001 — card is best-effort enrichment
+        card = None
+    card_note = None if card else "No README published on HuggingFace for this repo."
+
+    # GGUF files + sizes from the repo tree.
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as hc:
+            resp = await hc.get(
+                f"https://huggingface.co/api/models/{repo}/tree/main",
+                headers={"User-Agent": "HELM-control-plane"},
+            )
+        tree = resp.json() if resp.status_code == 200 else []
+    except httpx.HTTPError:
+        tree = []
+
+    # Detected pool, for the same fit math the Advisor uses.
+    pool_gb = used_gb = None
+    try:
+        info = await client.request("GET", "/api/v1/system-info", timeout=FAST)
+        stats = await client.request("GET", "/api/v1/system-stats", timeout=FAST)
+        pool = extract_pool(info, stats)
+        pool_gb, used_gb = pool.capacity_gb, pool.used_gb
+    except UpstreamError:
+        pass
+
+    files: list[HFFile] = []
+    for f in tree if isinstance(tree, list) else []:
+        path = f.get("path", "") if isinstance(f, dict) else ""
+        if not path.lower().endswith(".gguf"):
+            continue
+        size_b = f.get("size")
+        size_gb = round(size_b / 1e9, 2) if isinstance(size_b, (int, float)) and size_b else None
+        q = decode_quant(path)
+        fit = compute_fit(size_gb=size_gb, pool_gb=pool_gb, used_gb=used_gb) if size_gb else None
+        files.append(HFFile(
+            filename=path,
+            quant=q.label if q else None,
+            size_gb=size_gb,
+            fit_verdict=fit.verdict.value if fit else None,
+            fit_detail=fit.detail if fit else None,
+        ))
+    files.sort(key=lambda x: x.size_gb or 0.0)
+
+    return HFDetailOut(repo=repo, card=card, card_note=card_note,
+                       files=files, pool_gb=pool_gb, used_gb=used_gb)
 
 
 @router.post("/pull")

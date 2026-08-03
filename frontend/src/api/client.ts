@@ -426,6 +426,25 @@ export interface HFHit {
   suggested_name: string;
 }
 
+/** One GGUF file (quant) in an HF repo, with a grounded fit against your pool. */
+export interface HFFile {
+  filename: string;
+  quant: string | null;
+  size_gb: number | null;
+  fit_verdict: string | null;
+  fit_detail: string | null;
+}
+
+/** Pre-download read of an HF model: its own README + per-quant size/fit. */
+export interface HFDetail {
+  repo: string;
+  card: string | null;
+  card_note: string | null;
+  files: HFFile[];
+  pool_gb: number | null;
+  used_gb: number | null;
+}
+
 export interface LibraryQuery {
   text?: string;
   labels?: string;
@@ -696,6 +715,10 @@ export const api = {
   hfSearch: (query: string) =>
     request<{ query: string; results: HFHit[]; error: string | null }>(
       `/library/hf-search${qs({ query })}`),
+
+  /** Pre-download read for an HF repo: its README + per-quant size and a
+   *  grounded fit against your detected pool (the Advisor's own fit math). */
+  hfDetail: (repo: string) => request<HFDetail>(`/library/hf-detail${qs({ repo })}`),
 
   updateMetadata: (modelId: string, patch: MetadataPatch) =>
     request<Record<string, unknown>>(`/library/${encodeURIComponent(modelId)}/metadata`, {

@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/u/brain40)
-[![Release](https://img.shields.io/badge/release-0.9.9-16a34a.svg)](https://github.com/burrellka/HELM/releases)
+[![Release](https://img.shields.io/badge/release-0.9.10-16a34a.svg)](https://github.com/burrellka/HELM/releases)
 
 > *Not [Helm the Kubernetes tool](https://helm.sh), and not the Stanford HELM benchmark — "HELM" here is a homelab control plane for Lemonade Server. The name's just a nautical nod: it's the **helm** for steering your local-LLM fleet.*
 
