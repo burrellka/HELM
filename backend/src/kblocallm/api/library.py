@@ -13,6 +13,7 @@ connection through NPM and Cloudflare, which is precisely the thing that 524s.
 from __future__ import annotations
 
 import logging
+import re
 import time
 from typing import Any
 
@@ -316,12 +317,22 @@ class PullBody(BaseModel):
 HF_MODELS_API = "https://huggingface.co/api/models"
 
 
+#: A model with at least this many downloads in the last 30 days gets the
+#: "popular" 🔥 flag. Absolute (not relative to the result set) so it means the
+#: same thing across searches.
+_POPULAR_MONTHLY_DOWNLOADS = 10_000
+
+
 class HFHit(BaseModel):
     id: str
+    #: HuggingFace's `downloads` field = downloads in the LAST 30 DAYS (not all
+    #: time). That is the "downloads last month" the UI shows.
     downloads: int | None = None
     likes: int | None = None
     updated: str | None = None
     url: str
+    #: True when downloads-last-month clears the popularity bar (for the 🔥 flag).
+    popular: bool = False
     #: Default `user.`-prefixed name HELM would pull this under (Lemonade
     #: reserves non-user names for its own catalog).
     suggested_name: str
@@ -336,23 +347,25 @@ class HFSearchOut(BaseModel):
 
 
 @router.get("/hf-search", response_model=HFSearchOut)
-async def hf_search(query: str) -> HFSearchOut:
+async def hf_search(query: str, sort: str = "downloads") -> HFSearchOut:
     """Discover downloadable GGUF models on HuggingFace — parity with Lemonade's
     own search, which HELM's catalog-only search doesn't cover.
 
     Lemonade exposes no proxy for this (probed: all 404), so — exactly like the
     Advisor's model-card fetch — HELM queries HuggingFace's public API directly.
     Read-only, no admin key. `filter=gguf` keeps it to models Lemonade can
-    actually run; sorted by downloads so the useful ones surface first.
+    actually run. `sort` is "downloads" (Popular, default) or "lastModified"
+    (Recently updated).
     """
     q = query.strip()
     if len(q) < 2:
         return HFSearchOut(query=query)
+    hf_sort = "lastModified" if sort == "lastModified" else "downloads"
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
             resp = await client.get(
                 HF_MODELS_API,
-                params={"search": q, "filter": "gguf", "sort": "downloads",
+                params={"search": q, "filter": "gguf", "sort": hf_sort,
                         "direction": -1, "limit": 25},
                 headers={"User-Agent": "HELM-control-plane"},
             )
@@ -367,15 +380,22 @@ async def hf_search(query: str) -> HFSearchOut:
         if not rid:
             continue
         base = rid.split("/")[-1]
+        dl = m.get("downloads")
         hits.append(HFHit(
             id=rid,
-            downloads=m.get("downloads"),
+            downloads=dl,
             likes=m.get("likes"),
             updated=m.get("lastModified"),
             url=f"https://huggingface.co/{rid}",
+            popular=isinstance(dl, int) and dl >= _POPULAR_MONTHLY_DOWNLOADS,
             suggested_name=f"user.{base}",
         ))
     return HFSearchOut(query=query, results=hits)
+
+
+def _sanitize_name(s: str) -> str:
+    """A Lemonade model name — keep it to [A-Za-z0-9._-]."""
+    return re.sub(r"[^A-Za-z0-9._-]", "-", s).strip("-") or "model"
 
 
 class HFFile(BaseModel):
@@ -386,6 +406,13 @@ class HFFile(BaseModel):
     #: own models), so you can decide before downloading. None when unknowable.
     fit_verdict: str | None = None
     fit_detail: str | None = None
+    #: Everything needed to actually pull THIS quant. Lemonade needs a
+    #: user.-prefixed name, a `checkpoint` of the form org/repo:filename.gguf
+    #: (unambiguous — resolves the exact file), and recipe=llamacpp. Missing the
+    #: recipe/variant is why the plain Download 500'd.
+    pull_name: str
+    checkpoint: str
+    recipe: str = "llamacpp"
 
 
 class HFDetailOut(BaseModel):
@@ -440,18 +467,32 @@ async def hf_detail(repo: str, request: Request) -> HFDetailOut:
     files: list[HFFile] = []
     for f in tree if isinstance(tree, list) else []:
         path = f.get("path", "") if isinstance(f, dict) else ""
-        if not path.lower().endswith(".gguf"):
+        low = path.lower()
+        if not low.endswith(".gguf"):
+            continue
+        # Skip non-weight .gguf files that aren't a standalone model to download:
+        # `mmproj-*` is a vision projector (a SECOND checkpoint for a vision model,
+        # not the weights) and would mislead the quant list; `*imatrix*` is a
+        # calibration artifact. Offering these as "quants" pulls the wrong file.
+        if "mmproj" in low or "imatrix" in low:
             continue
         size_b = f.get("size")
         size_gb = round(size_b / 1e9, 2) if isinstance(size_b, (int, float)) and size_b else None
         q = decode_quant(path)
         fit = compute_fit(size_gb=size_gb, pool_gb=pool_gb, used_gb=used_gb) if size_gb else None
+        base = repo.split("/")[-1]
+        tag = q.label if q else path.rsplit("/", 1)[-1].removesuffix(".gguf")
         files.append(HFFile(
             filename=path,
             quant=q.label if q else None,
             size_gb=size_gb,
             fit_verdict=fit.verdict.value if fit else None,
             fit_detail=fit.detail if fit else None,
+            # Unambiguous: org/repo:filename.gguf resolves the exact file the
+            # operator picked. Distinct pull name per quant so two quants of the
+            # same repo don't collide.
+            pull_name=f"user.{_sanitize_name(f'{base}-{tag}')}",
+            checkpoint=f"{repo}:{path}",
         ))
     files.sort(key=lambda x: x.size_gb or 0.0)
 

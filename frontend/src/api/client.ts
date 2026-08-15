@@ -419,20 +419,27 @@ export interface Library {
  *  your catalog). Mirrors backend/api/library.py HFHit. */
 export interface HFHit {
   id: string;
+  /** Downloads in the LAST 30 DAYS (HuggingFace's `downloads` field). */
   downloads: number | null;
   likes: number | null;
   updated: string | null;
   url: string;
+  /** True when last-month downloads clear the popularity bar (🔥). */
+  popular: boolean;
   suggested_name: string;
 }
 
-/** One GGUF file (quant) in an HF repo, with a grounded fit against your pool. */
+/** One GGUF file (quant) in an HF repo, with a grounded fit against your pool
+ *  and everything needed to pull exactly this quant. */
 export interface HFFile {
   filename: string;
   quant: string | null;
   size_gb: number | null;
   fit_verdict: string | null;
   fit_detail: string | null;
+  pull_name: string;
+  checkpoint: string;
+  recipe: string;
 }
 
 /** Pre-download read of an HF model: its own README + per-quant size/fit. */
@@ -712,9 +719,9 @@ export const api = {
 
   /** Live HuggingFace GGUF search — the discovery Lemonade's UI has and HELM's
    *  catalog-only search lacks. Queries HF directly (no Lemonade proxy exists). */
-  hfSearch: (query: string) =>
+  hfSearch: (query: string, sort: 'downloads' | 'lastModified' = 'downloads') =>
     request<{ query: string; results: HFHit[]; error: string | null }>(
-      `/library/hf-search${qs({ query })}`),
+      `/library/hf-search${qs({ query, sort })}`),
 
   /** Pre-download read for an HF repo: its README + per-quant size and a
    *  grounded fit against your detected pool (the Advisor's own fit math). */

@@ -85,6 +85,7 @@ export default function Library({ managementEnabled, focusModelId }: {
   /** Live HuggingFace discovery for the current search term (null = not searched). */
   const [hf, setHf] = useState<{ results: HFHit[]; error: string | null } | null>(null);
   const [hfBusy, setHfBusy] = useState(false);
+  const [hfSort, setHfSort] = useState<'downloads' | 'lastModified'>('downloads');
 
   const refresh = useCallback(async () => {
     try {
@@ -110,7 +111,7 @@ export default function Library({ managementEnabled, focusModelId }: {
     let live = true;
     const id = setTimeout(async () => {
       try {
-        const r = await api.hfSearch(text);
+        const r = await api.hfSearch(text, hfSort);
         if (live) setHf({ results: r.results, error: r.error });
       } catch (e) {
         if (live) setHf({ results: [], error: e instanceof Error ? e.message : String(e) });
@@ -119,7 +120,7 @@ export default function Library({ managementEnabled, focusModelId }: {
       }
     }, 450);
     return () => { live = false; clearTimeout(id); };
-  }, [query.text]);
+  }, [query.text, hfSort]);
 
   const set = (patch: Partial<LibraryQuery>) => setQuery((q) => ({ ...q, ...patch }));
 
@@ -172,6 +173,8 @@ export default function Library({ managementEnabled, focusModelId }: {
         <HuggingFaceResults
           hf={hf}
           busy={hfBusy}
+          sort={hfSort}
+          onSort={setHfSort}
           managementEnabled={managementEnabled}
           catalogCheckpoints={new Set(
             (data?.entries ?? [])
@@ -225,19 +228,33 @@ export default function Library({ managementEnabled, focusModelId }: {
  * 162" surprise). A failed HF call is a visible "couldn't search", never a
  * silent empty list that reads as "nothing exists".
  */
-function HuggingFaceResults({ hf, busy, managementEnabled, catalogCheckpoints, onDownloaded }: {
+function HuggingFaceResults({ hf, busy, sort, onSort, managementEnabled, catalogCheckpoints, onDownloaded }: {
   hf: { results: HFHit[]; error: string | null } | null;
   busy: boolean;
+  sort: 'downloads' | 'lastModified';
+  onSort: (s: 'downloads' | 'lastModified') => void;
   managementEnabled: boolean;
   catalogCheckpoints: Set<string>;
   onDownloaded: () => void;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-      <div className="stat-sub" style={{
-        textTransform: 'uppercase', letterSpacing: '0.02em', fontWeight: 600, marginTop: '0.5rem',
-      }}>
-        From HuggingFace{busy && <span style={{ fontWeight: 400 }}> · searching…</span>}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div className="stat-sub" style={{ textTransform: 'uppercase', letterSpacing: '0.02em', fontWeight: 600 }}>
+          From HuggingFace{busy && <span style={{ fontWeight: 400 }}> · searching…</span>}
+        </div>
+        <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+          <span className="stat-sub">Sort:</span>
+          {([['downloads', '🔥 Popular'], ['lastModified', 'Recently updated']] as const).map(([v, label]) => (
+            <button key={v} type="button" onClick={() => onSort(v)}
+              style={{ cursor: 'pointer', borderRadius: 999, padding: '0.125rem 0.6rem', fontSize: '0.75rem',
+                border: '1px solid var(--border-color)',
+                background: sort === v ? 'var(--accent-primary)' : 'transparent',
+                color: sort === v ? 'white' : 'var(--text-secondary)',
+                fontWeight: sort === v ? 600 : 400 }}>{label}</button>
+          ))}
+        </div>
       </div>
       {hf?.error && (
         <Callout tone="warn" title="Couldn't search HuggingFace">
@@ -255,11 +272,16 @@ function HuggingFaceResults({ hf, busy, managementEnabled, catalogCheckpoints, o
   );
 }
 
+/** 867963 -> "868K", 1_200_000 -> "1.2M". */
+function fmtDownloads(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+  return String(n);
+}
+
 function HFResultRow({ hit, managementEnabled, alreadyInCatalog, onDownloaded }: {
   hit: HFHit; managementEnabled: boolean; alreadyInCatalog: boolean; onDownloaded: () => void;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState<HFDetail | null>(null);
   const [detailErr, setDetailErr] = useState<string | null>(null);
@@ -274,20 +296,6 @@ function HFResultRow({ hit, managementEnabled, alreadyInCatalog, onDownloaded }:
     return () => { live = false; };
   }, [open, hit.id, detail, detailErr]);
 
-  const download = async () => {
-    setBusy(true); setNote(null);
-    try {
-      const r = await api.pull(hit.suggested_name, hit.id);
-      setNote(`Download started as ${hit.suggested_name}. Watch the header indicator.`
-        + (r.warnings?.length ? ' ' + r.warnings.join(' ') : ''));
-      onDownloaded();
-    } catch (e) {
-      setNote(`Could not start the download: ${e instanceof Error ? e.message : String(e)}`);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <div className="card">
       <div style={{
@@ -295,28 +303,32 @@ function HFResultRow({ hit, managementEnabled, alreadyInCatalog, onDownloaded }:
         justifyContent: 'space-between', flexWrap: 'wrap',
       }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
-              title={open ? 'Hide details' : 'Show the model card and per-quant fit'}
+              title={open ? 'Hide details' : 'Show quants, fit, and the model card'}
               style={{ cursor: 'pointer', border: 'none', background: 'none',
                 color: 'var(--text-secondary)', padding: 0, fontSize: '0.75rem', width: '1rem' }}>
               {open ? '▾' : '▸'}
             </button>
             <a href={hit.url} target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>{hit.id}</a>
+            {hit.popular && <span title="Popular — high downloads in the last month">🔥</span>}
+            {hit.downloads != null && (
+              <span className="stat-sub" title="Downloads in the last 30 days">
+                {fmtDownloads(hit.downloads)}/mo
+              </span>
+            )}
           </div>
           <div className="stat-sub" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginLeft: '1.5rem' }}>
-            {hit.downloads != null && <span>↓ {hit.downloads.toLocaleString()}</span>}
             {hit.likes != null && hit.likes > 0 && <span>♥ {hit.likes}</span>}
             <span>GGUF</span>
           </div>
-          {note && <div className="stat-sub" style={{ marginTop: '0.25rem', marginLeft: '1.5rem' }}>{note}</div>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
           {alreadyInCatalog
             ? <span className="stat-sub">already in your library</span>
             : managementEnabled
-              ? <button type="button" className="btn-secondary" disabled={busy}
-                  onClick={() => void download()}>{busy ? 'Starting…' : 'Download'}</button>
+              ? <button type="button" className="btn-secondary" onClick={() => setOpen(true)}
+                  title="Pick a quant to download">Choose quant ▾</button>
               : <a href={hit.url} target="_blank" rel="noreferrer" className="btn-secondary">View on HF</a>}
         </div>
       </div>
@@ -325,7 +337,8 @@ function HFResultRow({ hit, managementEnabled, alreadyInCatalog, onDownloaded }:
         <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)' }}>
           {detailErr && <span className="unknown">Couldn't load details: {detailErr}</span>}
           {!detail && !detailErr && <span className="stat-sub">Reading model card and sizes…</span>}
-          {detail && <HFDetailBody detail={detail} />}
+          {detail && <HFDetailBody detail={detail} managementEnabled={managementEnabled}
+            onDownloaded={onDownloaded} />}
         </div>
       )}
     </div>
@@ -335,7 +348,9 @@ function HFResultRow({ hit, managementEnabled, alreadyInCatalog, onDownloaded }:
 /** The pre-download read: per-quant size + grounded fit against your pool, then
  *  the model's own HF README. Fit uses the same math as the Advisor, so a quant
  *  that won't fit says so honestly before you spend the download. */
-function HFDetailBody({ detail }: { detail: HFDetail }) {
+function HFDetailBody({ detail, managementEnabled, onDownloaded }: {
+  detail: HFDetail; managementEnabled: boolean; onDownloaded: () => void;
+}) {
   const fitColor = (v: string | null) =>
     v === 'too_big' ? 'var(--status-bad)'
       : v === 'fits_if_evict' ? 'var(--status-warn)'
@@ -352,16 +367,10 @@ function HFDetailBody({ detail }: { detail: HFDetail }) {
           <div className="stat-sub" style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
             Quants & fit{detail.pool_gb != null && <span style={{ fontWeight: 400 }}> · against your {detail.pool_gb.toFixed(0)} GB pool</span>}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.8125rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.8125rem' }}>
             {detail.files.map((f) => (
-              <div key={f.filename} style={{ display: 'flex', gap: '1rem', alignItems: 'baseline' }}>
-                <span className="mono" style={{ minWidth: 90 }}>{f.quant ?? f.filename}</span>
-                <span className="tabular" style={{ minWidth: 70 }}>
-                  {f.size_gb != null ? `${f.size_gb.toFixed(2)} GB` : '—'}
-                </span>
-                <span title={f.fit_detail ?? undefined}
-                  style={{ color: fitColor(f.fit_verdict), fontWeight: 500 }}>{fitLabel(f.fit_verdict)}</span>
-              </div>
+              <HFQuantRow key={f.filename} f={f} managementEnabled={managementEnabled}
+                onDownloaded={onDownloaded} fitColor={fitColor} fitLabel={fitLabel} />
             ))}
           </div>
         </div>
@@ -372,6 +381,50 @@ function HFDetailBody({ detail }: { detail: HFDetail }) {
           ? <div style={{ maxHeight: 360, overflowY: 'auto' }}><Markdown>{detail.card}</Markdown></div>
           : <span className="stat-sub">{detail.card_note ?? 'No model card.'}</span>}
       </div>
+    </div>
+  );
+}
+
+/** One quant row: label, size, fit, and — with management on — a Download that
+ *  pulls THIS exact quant (Lemonade needs user.name + org/repo:file + recipe;
+ *  the backend built those, so we just forward them). */
+function HFQuantRow({ f, managementEnabled, onDownloaded, fitColor, fitLabel }: {
+  f: import('../api/client').HFFile;
+  managementEnabled: boolean;
+  onDownloaded: () => void;
+  fitColor: (v: string | null) => string | undefined;
+  fitLabel: (v: string | null) => string;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const download = async () => {
+    setBusy(true); setNote(null);
+    try {
+      const r = await api.pull(f.pull_name, f.checkpoint, f.recipe);
+      setNote(`Downloading as ${f.pull_name} — watch the header indicator.`
+        + (r.warnings?.length ? ' ' + r.warnings.join(' ') : ''));
+      onDownloaded();
+    } catch (e) {
+      setNote(`Could not start: ${e instanceof Error ? e.message : String(e)}`);
+    } finally { setBusy(false); }
+  };
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <span className="mono" style={{ minWidth: 96 }}>{f.quant ?? f.filename}</span>
+        <span className="tabular" style={{ minWidth: 70 }}>
+          {f.size_gb != null ? `${f.size_gb.toFixed(2)} GB` : '—'}
+        </span>
+        <span title={f.fit_detail ?? undefined} style={{ color: fitColor(f.fit_verdict), fontWeight: 500, minWidth: 150 }}>
+          {fitLabel(f.fit_verdict)}
+        </span>
+        {managementEnabled && (
+          <button type="button" className="btn-secondary" disabled={busy}
+            style={{ padding: '0.1rem 0.55rem', fontSize: '0.75rem' }}
+            onClick={() => void download()}>{busy ? 'Starting…' : 'Download'}</button>
+        )}
+      </div>
+      {note && <div className="stat-sub" style={{ marginLeft: '96px', marginTop: '0.15rem' }}>{note}</div>}
     </div>
   );
 }
