@@ -470,11 +470,24 @@ async def hf_detail(repo: str, request: Request) -> HFDetailOut:
         low = path.lower()
         if not low.endswith(".gguf"):
             continue
-        # Skip non-weight .gguf files that aren't a standalone model to download:
-        # `mmproj-*` is a vision projector (a SECOND checkpoint for a vision model,
-        # not the weights) and would mislead the quant list; `*imatrix*` is a
-        # calibration artifact. Offering these as "quants" pulls the wrong file.
-        if "mmproj" in low or "imatrix" in low:
+        # Skip non-weight .gguf files that aren't a standalone model to download.
+        # These are auxiliary companions to the real weights, and offering them as
+        # "quants" pulls a file that llama-server can't start from:
+        #   `mmproj-*`  — vision projector (a SECOND checkpoint for a vision model)
+        #   `*imatrix*` — importance-matrix calibration artifact
+        #   `mtp-*` / `*-mtp-*` / `draft`/`eagle` — a speculative-decoding DRAFT head
+        #     (multi-token prediction). Tiny (~0.25 GB) so it looks like the smallest
+        #     "quant", but it belongs in Lemonade's `draft` checkpoint slot next to a
+        #     real `main`, never as the main weights. Loading it standalone =
+        #     "llama-server failed to start".
+        base_name = low.rsplit("/", 1)[-1]
+        if (
+            "mmproj" in low
+            or "imatrix" in low
+            or base_name.startswith(("mtp-", "mtp_", "draft-", "draft_", "eagle-", "eagle_"))
+            or "-mtp-" in base_name
+            or "-draft" in base_name
+        ):
             continue
         size_b = f.get("size")
         size_gb = round(size_b / 1e9, 2) if isinstance(size_b, (int, float)) and size_b else None

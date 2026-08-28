@@ -13,7 +13,7 @@
 
 services:
   helm-api:
-    image: brain40/helm-api:0.9.11
+    image: brain40/helm-api:0.9.12
     container_name: helm-api
 
     # Run as a normal user, not root, so files in the bind mount below are owned
@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
 
   helm-web:
-    image: brain40/helm-web:0.9.11
+    image: brain40/helm-web:0.9.12
     container_name: helm-web
     ports:
       # The UI. Reach it at http://<this-host>:5080. If you put a reverse proxy
