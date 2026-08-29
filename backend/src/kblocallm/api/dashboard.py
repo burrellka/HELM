@@ -29,7 +29,9 @@ from typing import Any
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
+from ..config import get_settings
 from ..domain.dashboard import Dashboard, SectionError, build_dashboard
+from ..domain.gpu_sensors import GpuSensors, read_gpu_sensors
 from ..storage.backends import BackendStateStore
 from ..upstream.client import FAST, LemonadeClient, UpstreamError, UpstreamErrorKind
 
@@ -186,6 +188,16 @@ async def dashboard(request: Request, refresh_static: bool = False) -> Dashboard
                     ),
                 )
 
+    # Local GPU thermals — temp/power the kernel gets right even where the
+    # utilization gauge is stuck. A tiny sysfs read, but offloaded like the
+    # SQLite call so a blocking read on an odd /sys can't stall the event loop.
+    # Absent (HELM not on the GPU host, non-Linux dev box) -> all-None, no fake.
+    try:
+        sensors = await asyncio.to_thread(read_gpu_sensors, get_settings().drm_root)
+    except Exception:  # noqa: BLE001
+        logger.debug("GPU sensor read failed", exc_info=True)
+        sensors = GpuSensors()
+
     return build_dashboard(
         health=health,
         system_stats=system_stats,
@@ -193,6 +205,8 @@ async def dashboard(request: Request, refresh_static: bool = False) -> Dashboard
         stats=stats,
         params=params,
         backend_states=backend_states,
+        gpu_temp_c=sensors.temp_c,
+        gpu_power_w=sensors.power_w,
         reachable="health" not in errors,
         management_enabled=client.has_admin_key,
         errors=errors,

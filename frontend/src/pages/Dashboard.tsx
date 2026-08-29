@@ -332,8 +332,19 @@ function ResourceHeader({ resources }: { resources: ResourceView }) {
               : <>{pool.used_gb?.toFixed(1) ?? '—'} <span className="stat-sub">/ {pool.capacity_gb.toFixed(1)} GB</span></>
           }
         />
+        {/* GPU% can be stuck at 100% on gfx1151 (an amdgpu bug). We keep the
+            gauge — it is correct where the driver reports honestly — and read
+            temp/power locally from hwmon, which the kernel gets right on every
+            AMD GPU. When the gauge is provably lying (pinned high while thermals
+            say idle) the backend fills gpu_percent_note and it shows below. */}
         <Gauge label="GPU" percent={resources.gpu_percent}
-          value={<Percent value={resources.gpu_percent} />} />
+          value={
+            <>
+              <Percent value={resources.gpu_percent} />
+              <GpuThermals tempC={resources.gpu_temp_c} powerW={resources.gpu_power_w} />
+            </>
+          }
+          footnote={resources.gpu_percent_note ?? undefined} />
         <Gauge label="CPU" percent={resources.cpu_percent}
           value={<Percent value={resources.cpu_percent} />} />
         {/* Rule 3. `??` not `||`. The gauge is broken upstream; say so rather
@@ -362,6 +373,20 @@ function ResourceHeader({ resources }: { resources: ResourceView }) {
 function Percent({ value }: { value: number | null }) {
   if (value == null) return <span className="unknown">unavailable</span>;
   return <span className="tabular">{value.toFixed(0)}<span className="stat-sub"> %</span></span>;
+}
+
+/** GPU temperature and power, read locally from hwmon. Genuinely more useful
+ *  than the percentage (idle vs working is unambiguous) and a thermal readout
+ *  matters on Strix Halo, where sustained-load thermal reboots are documented.
+ *  Renders nothing when HELM isn't co-located with the GPU (both null). */
+function GpuThermals({ tempC, powerW }: { tempC: number | null; powerW: number | null }) {
+  if (tempC == null && powerW == null) return null;
+  const parts: string[] = [];
+  if (tempC != null) parts.push(`${tempC.toFixed(0)}°C`);
+  if (powerW != null) parts.push(`${powerW.toFixed(0)} W`);
+  return (
+    <div className="stat-sub tabular" style={{ marginTop: '0.25rem' }}>{parts.join(' · ')}</div>
+  );
 }
 
 function Gauge({ label, percent, value, footnote, title }: {

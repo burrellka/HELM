@@ -76,6 +76,17 @@ class Settings(BaseSettings):
     # change without a redeploy — see advisor_service.AdvisorSettingsStore.
     web_search_key: str = Field(default="")
 
+    # --- Local GPU sensors (temp/power) -----------------------------------
+    # Lemonade's /api/v1/system-stats exposes gpu_percent but NOT temperature
+    # or power. When helm-api runs ON the GPU host, HELM reads those two from
+    # the kernel's hwmon sysfs directly — they read correctly on every AMD GPU
+    # even where the utilization gauge is stuck (a documented gfx1151 driver
+    # bug, ROCm #6035/#5750). This is the DRM class root it globs under; the
+    # default is correct in-container when /sys is present. On a box where HELM
+    # is NOT co-located with the GPU (or a non-Linux dev host) the path is
+    # absent and temp/power simply read as unavailable — never faked.
+    drm_root: Path = Field(default=Path("/sys/class/drm"))
+
     @property
     def db_path(self) -> Path:
         return self.data_dir / "helm.db"

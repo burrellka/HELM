@@ -157,6 +157,13 @@ export interface TypeCapacity {
 export interface ResourceView {
   pool: PoolView;
   gpu_percent: number | null;
+  /** GPU temp (°C) / power (W) read locally from hwmon; null when HELM is not
+   *  co-located with the GPU. Read correctly even when gpu_percent is stuck. */
+  gpu_temp_c: number | null;
+  gpu_power_w: number | null;
+  /** Set when gpu_percent is provably lying (pinned 100% while thermals idle).
+   *  The gauge still renders; this note sits beside it. */
+  gpu_percent_note: string | null;
   cpu_percent: number | null;
   /** Rule 3: ALWAYS null on this box. Render with `??`, never `||` — a
    *  legitimately-fixed 0 must not display as "unavailable". */

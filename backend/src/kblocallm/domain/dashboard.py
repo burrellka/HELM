@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 
 from .concurrency import ConcurrencyKind, derive_concurrency
 from .crash import BackendState, BackendStatus
+from .gpu_sensors import interpret_gpu_gauge
 from .pool import MemoryPool, PoolWarning, extract_pool
 
 #: Above this, a reported tok/s is an artifact, not a measurement. The live box
@@ -74,6 +75,15 @@ class TypeCapacity(BaseModel):
 class ResourceView(BaseModel):
     pool: PoolView
     gpu_percent: float | None = None
+    #: GPU temperature (°C) and average power (W), read locally from hwmon —
+    #: Lemonade exposes neither. None when HELM is not co-located with the GPU.
+    #: These read correctly even when gpu_percent is the stuck gauge below.
+    gpu_temp_c: float | None = None
+    gpu_power_w: float | None = None
+    #: Set when gpu_percent is provably lying: pinned at 100% while temp/power
+    #: say idle (the gfx1151 amdgpu bug). The gauge still renders; this note
+    #: sits beside it. Self-clears if the driver is ever fixed upstream.
+    gpu_percent_note: str | None = None
     cpu_percent: float | None = None
     #: Rule 3. ALWAYS null on this box — a known-broken gauge. The frontend
     #: renders `?? 'unavailable'`, never `|| `: if the gauge is ever fixed
@@ -273,6 +283,8 @@ def build_dashboard(
     params: dict[str, Any] | None,
     backend_states: dict[str, BackendState] | None = None,
     *,
+    gpu_temp_c: float | None = None,
+    gpu_power_w: float | None = None,
     reachable: bool = True,
     management_enabled: bool = False,
     errors: dict[str, SectionError] | None = None,
@@ -348,9 +360,13 @@ def build_dashboard(
 
     pool = extract_pool(system_info, system_stats, gtt_enabled=gtt_enabled)
     stats_dict = system_stats if isinstance(system_stats, dict) else {}
+    gpu_percent = _number(stats_dict.get("gpu_percent"))
     resources = ResourceView(
         pool=_pool_view(pool),
-        gpu_percent=_number(stats_dict.get("gpu_percent")),
+        gpu_percent=gpu_percent,
+        gpu_temp_c=gpu_temp_c,
+        gpu_power_w=gpu_power_w,
+        gpu_percent_note=interpret_gpu_gauge(gpu_percent, gpu_temp_c, gpu_power_w),
         cpu_percent=_number(stats_dict.get("cpu_percent")),
         npu_percent=_number(stats_dict.get("npu_percent")),
         system_ram_gb=_number(stats_dict.get("memory_gb")),

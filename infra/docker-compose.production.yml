@@ -13,7 +13,7 @@
 
 services:
   helm-api:
-    image: brain40/helm-api:0.9.12
+    image: brain40/helm-api:0.9.13
     container_name: helm-api
 
     # Run as a normal user, not root, so files in the bind mount below are owned
@@ -61,6 +61,15 @@ services:
       # lookups (separate from any model key). Empty = advisor runs without live
       # lookup and says so. Get one at https://aistudio.google.com.
       HELM_WEB_SEARCH_KEY: ${HELM_WEB_SEARCH_KEY:-}
+
+      # GPU temperature + power on the dashboard come from the kernel's hwmon
+      # sysfs, which HELM reads directly (Lemonade exposes neither). This works
+      # ONLY when helm-api runs on the SAME host as the GPU: Docker's default
+      # /sys mount then exposes /sys/class/drm/card*/device/hwmon (world-readable,
+      # fine as the non-root user above). If HELM is NOT co-located with the GPU,
+      # temp/power simply show as unavailable — never faked. Override this sysfs
+      # root only for unusual layouts; the default is correct in-container.
+      HELM_DRM_ROOT: ${HELM_DRM_ROOT:-/sys/class/drm}
     volumes:
       # HOST ./helm-data  ->  CONTAINER /data
       #
@@ -75,7 +84,7 @@ services:
     restart: unless-stopped
 
   helm-web:
-    image: brain40/helm-web:0.9.12
+    image: brain40/helm-web:0.9.13
     container_name: helm-web
     ports:
       # The UI. Reach it at http://<this-host>:5080. If you put a reverse proxy
