@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 from ..advisor_service import HFMetadataService, ModelSourceStore
 from ..domain.advisor import compute_fit, decode_quant
 from ..domain.drift import DriftReport
+from ..domain.hf_quants import group_gguf_files
 from ..domain.hf_resolve import RepoConfidence, resolve_repo
 from ..domain.library import LabelJoin, build_library, search, unmatched_loaded_models
 from ..domain.pool import extract_pool
@@ -312,6 +313,9 @@ class PullBody(BaseModel):
     model_name: str
     checkpoint: str | None = None
     recipe: str | None = None
+    #: For a split GGUF: every shard's `org/repo:file.gguf` checkpoint, so HELM
+    #: downloads them ALL (not just `checkpoint`). Empty/one = ordinary pull.
+    shards: list[str] = Field(default_factory=list)
 
 
 HF_MODELS_API = "https://huggingface.co/api/models"
@@ -413,6 +417,11 @@ class HFFile(BaseModel):
     pull_name: str
     checkpoint: str
     recipe: str = "llamacpp"
+    #: All files to download for this quant. One for a normal quant; several for
+    #: a split GGUF (`-00001-of-00002`), where every shard must be present or the
+    #: load fails and evicts the fleet. `checkpoint` points at the first shard;
+    #: llama.cpp finds the rest in the same directory once they're all pulled.
+    shards: list[str] = Field(default_factory=list)
 
 
 class HFDetailOut(BaseModel):
@@ -443,11 +452,15 @@ async def hf_detail(repo: str, request: Request) -> HFDetailOut:
         card = None
     card_note = None if card else "No README published on HuggingFace for this repo."
 
-    # GGUF files + sizes from the repo tree.
+    # GGUF files + sizes from the repo tree. `recursive=true` is load-bearing:
+    # many repos (ISTA Flash-Next, others) organise quants in subdirectories
+    # (`IQ3_XXS/...gguf`), and a flat read sees none of them — the "no quants
+    # shown, card only" bug.
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as hc:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(15.0)) as hc:
             resp = await hc.get(
                 f"https://huggingface.co/api/models/{repo}/tree/main",
+                params={"recursive": "true"},
                 headers={"User-Agent": "HELM-control-plane"},
             )
         tree = resp.json() if resp.status_code == 200 else []
@@ -464,48 +477,35 @@ async def hf_detail(repo: str, request: Request) -> HFDetailOut:
     except UpstreamError:
         pass
 
-    files: list[HFFile] = []
+    # Group into real quants: companions dropped, split shards collapsed into one
+    # option (summed size, primary = shard 00001). Pure + tested in domain.
+    entries: list[tuple[str, int | None]] = []
     for f in tree if isinstance(tree, list) else []:
-        path = f.get("path", "") if isinstance(f, dict) else ""
-        low = path.lower()
-        if not low.endswith(".gguf"):
+        if not isinstance(f, dict):
             continue
-        # Skip non-weight .gguf files that aren't a standalone model to download.
-        # These are auxiliary companions to the real weights, and offering them as
-        # "quants" pulls a file that llama-server can't start from:
-        #   `mmproj-*`  — vision projector (a SECOND checkpoint for a vision model)
-        #   `*imatrix*` — importance-matrix calibration artifact
-        #   `mtp-*` / `*-mtp-*` / `draft`/`eagle` — a speculative-decoding DRAFT head
-        #     (multi-token prediction). Tiny (~0.25 GB) so it looks like the smallest
-        #     "quant", but it belongs in Lemonade's `draft` checkpoint slot next to a
-        #     real `main`, never as the main weights. Loading it standalone =
-        #     "llama-server failed to start".
-        base_name = low.rsplit("/", 1)[-1]
-        if (
-            "mmproj" in low
-            or "imatrix" in low
-            or base_name.startswith(("mtp-", "mtp_", "draft-", "draft_", "eagle-", "eagle_"))
-            or "-mtp-" in base_name
-            or "-draft" in base_name
-        ):
-            continue
+        path = f.get("path", "")
         size_b = f.get("size")
-        size_gb = round(size_b / 1e9, 2) if isinstance(size_b, (int, float)) and size_b else None
-        q = decode_quant(path)
+        entries.append((path, size_b if isinstance(size_b, int) else None))
+
+    base = repo.split("/")[-1]
+    files: list[HFFile] = []
+    for g in group_gguf_files(entries):
+        size_gb = round(g.size_bytes / 1e9, 2) if g.size_bytes else None
+        q = decode_quant(g.primary)
         fit = compute_fit(size_gb=size_gb, pool_gb=pool_gb, used_gb=used_gb) if size_gb else None
-        base = repo.split("/")[-1]
-        tag = q.label if q else path.rsplit("/", 1)[-1].removesuffix(".gguf")
+        tag = q.label if q else g.fallback_label
         files.append(HFFile(
-            filename=path,
+            filename=g.primary,
             quant=q.label if q else None,
             size_gb=size_gb,
             fit_verdict=fit.verdict.value if fit else None,
             fit_detail=fit.detail if fit else None,
-            # Unambiguous: org/repo:filename.gguf resolves the exact file the
-            # operator picked. Distinct pull name per quant so two quants of the
-            # same repo don't collide.
+            # Unambiguous: org/repo:filename.gguf resolves the exact file. Distinct
+            # pull name per quant so two quants of one repo don't collide. For a
+            # split, checkpoint is shard 00001 and `shards` carries all of them.
             pull_name=f"user.{_sanitize_name(f'{base}-{tag}')}",
-            checkpoint=f"{repo}:{path}",
+            checkpoint=f"{repo}:{g.primary}",
+            shards=[f"{repo}:{s}" for s in g.shards],
         ))
     files.sort(key=lambda x: x.size_gb or 0.0)
 
@@ -536,30 +536,59 @@ async def pull(body: PullBody, request: Request) -> dict:
     # catalog-provided checkpoint back to Lemonade is exactly what broke the
     # Download button (the 400 surfaced as a 502).
     is_custom = body.model_name.startswith("user.")
-    payload: dict[str, Any] = {
-        "model_name": body.model_name, "stream": True, "subscribe": False,
-    }
-    if is_custom:
-        if body.checkpoint:
-            payload["checkpoint"] = body.checkpoint
-        if body.recipe:
-            payload["recipe"] = body.recipe
-    elif body.checkpoint or body.recipe:
-        # A built-in was given a checkpoint/recipe (the frontend passes the
-        # catalog checkpoint for convenience). Drop them — Lemonade owns the
-        # built-in's checkpoint — and say so rather than 400.
-        warnings.append(
-            "Pulling the built-in by name; ignored the supplied checkpoint/recipe "
-            "(Lemonade resolves those from its own catalog for built-ins). To pull "
-            "a custom model with your own checkpoint, prefix the name with 'user.'."
-        )
 
-    try:
-        result = await client.request(
-            "POST", "/api/v1/pull", admin=True, json_body=payload, timeout=TRANSFER,
+    # Which checkpoints to download. A split GGUF needs ALL its shards present or
+    # the load fails on the missing one and evicts the fleet, so we pull every
+    # shard — primary (00001) LAST, so the final registration lands on the file
+    # llama.cpp is handed. A single-shard quant is just `[checkpoint]`.
+    #   SAFE to do here: a pull is a DOWNLOAD, not a load — it never evicts. The
+    #   worst case of a wrong sequence is a spare registration the operator
+    #   deletes, not a fleet wipe (that only happens on a deliberate load).
+    #   NOTE: confirm Lemonade's re-pull-same-name semantics in the live test.
+    def _order_shards() -> list[str]:
+        others = [s for s in body.shards if s and s != body.checkpoint]
+        return [*others, body.checkpoint] if body.checkpoint else others
+
+    if is_custom and len(body.shards) > 1:
+        checkpoints = _order_shards()
+    elif is_custom and body.checkpoint:
+        checkpoints = [body.checkpoint]
+    else:
+        checkpoints = [None]  # built-in: pull by name, no checkpoint
+        if not is_custom and (body.checkpoint or body.recipe):
+            # A built-in was given a checkpoint/recipe (the frontend passes the
+            # catalog checkpoint for convenience). Drop them — Lemonade owns the
+            # built-in's checkpoint — and say so rather than 400.
+            warnings.append(
+                "Pulling the built-in by name; ignored the supplied checkpoint/recipe "
+                "(Lemonade resolves those from its own catalog for built-ins). To pull "
+                "a custom model with your own checkpoint, prefix the name with 'user.'."
+            )
+
+    results: list[Any] = []
+    for checkpoint in checkpoints:
+        payload: dict[str, Any] = {
+            "model_name": body.model_name, "stream": True, "subscribe": False,
+        }
+        if is_custom and checkpoint:
+            payload["checkpoint"] = checkpoint
+            if body.recipe:
+                payload["recipe"] = body.recipe
+        try:
+            results.append(await client.request(
+                "POST", "/api/v1/pull", admin=True, json_body=payload, timeout=TRANSFER,
+            ))
+        except UpstreamError as e:
+            # Name which shard failed — "shard 2 of 3 failed" is far more
+            # actionable than a bare 502 on a multi-file download.
+            where = f" (checkpoint {checkpoint})" if checkpoint else ""
+            raise HTTPException(status_code=502, detail={"kind": e.kind, "detail": f"{e}{where}"})
+    result = results[-1] if len(results) == 1 else {"shards": results}
+    if len(checkpoints) > 1:
+        warnings.append(
+            f"Split GGUF: downloaded {len(checkpoints)} shards. All must finish before this "
+            f"model will load; the dashboard shows the download progress for each."
         )
-    except UpstreamError as e:
-        raise HTTPException(status_code=502, detail={"kind": e.kind, "detail": str(e)})
 
     # Remember where this model came from. Lemonade will report a local file path
     # for it after the download, losing the HF origin; recording the pull-time

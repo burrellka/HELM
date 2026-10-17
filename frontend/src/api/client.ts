@@ -447,6 +447,9 @@ export interface HFFile {
   pull_name: string;
   checkpoint: string;
   recipe: string;
+  /** Every file to download for this quant. >1 means a split GGUF — all shards
+   *  must be pulled or the load fails on the missing one. */
+  shards: string[];
 }
 
 /** Pre-download read of an HF model: its own README + per-quant size/fit. */
@@ -741,9 +744,9 @@ export const api = {
 
   exportMetadata: () => request<unknown>('/library/export'),
 
-  pull: (model_name: string, checkpoint?: string, recipe?: string) =>
+  pull: (model_name: string, checkpoint?: string, recipe?: string, shards?: string[]) =>
     request<{ started: boolean; warnings: string[] }>('/library/pull', {
-      method: 'POST', body: JSON.stringify({ model_name, checkpoint, recipe }),
+      method: 'POST', body: JSON.stringify({ model_name, checkpoint, recipe, shards: shards ?? [] }),
     }),
 
   /** Server-owned download jobs — survives a browser refresh. `active` is the

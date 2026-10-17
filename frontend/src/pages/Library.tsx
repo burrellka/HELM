@@ -397,10 +397,11 @@ function HFQuantRow({ f, managementEnabled, onDownloaded, fitColor, fitLabel }: 
 }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const splitCount = f.shards?.length ?? 0;
   const download = async () => {
     setBusy(true); setNote(null);
     try {
-      const r = await api.pull(f.pull_name, f.checkpoint, f.recipe);
+      const r = await api.pull(f.pull_name, f.checkpoint, f.recipe, f.shards);
       setNote(`Downloading as ${f.pull_name} — watch the header indicator.`
         + (r.warnings?.length ? ' ' + r.warnings.join(' ') : ''));
       onDownloaded();
@@ -415,6 +416,10 @@ function HFQuantRow({ f, managementEnabled, onDownloaded, fitColor, fitLabel }: 
         <span className="tabular" style={{ minWidth: 70 }}>
           {f.size_gb != null ? `${f.size_gb.toFixed(2)} GB` : '—'}
         </span>
+        {splitCount > 1 && (
+          <span className="stat-sub" title="Split GGUF — all shards download together"
+            style={{ minWidth: 56 }}>{splitCount} files</span>
+        )}
         <span title={f.fit_detail ?? undefined} style={{ color: fitColor(f.fit_verdict), fontWeight: 500, minWidth: 150 }}>
           {fitLabel(f.fit_verdict)}
         </span>

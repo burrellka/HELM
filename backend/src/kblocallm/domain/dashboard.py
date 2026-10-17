@@ -309,7 +309,15 @@ def build_dashboard(
     raw_models = [m for m in raw_models if isinstance(m, dict)]
     recipes = (system_info or {}).get("recipes") if isinstance(system_info, dict) else None
 
+    # `enable_dgpu_gtt` now comes from /internal/config (the old /api/v1/params
+    # was removed). Read it flat, and tolerate a one-level {"config": {...}}
+    # wrapper in case the new endpoint nests it — either way a non-bool or a
+    # missing key degrades to None ("GTT unconfirmed"), never a guessed bool.
     gtt = params.get("enable_dgpu_gtt")
+    if not isinstance(gtt, bool):
+        nested = params.get("config")
+        if isinstance(nested, dict):
+            gtt = nested.get("enable_dgpu_gtt")
     gtt_enabled = gtt if isinstance(gtt, bool) else None
 
     ranks = _lru_ranks(raw_models)

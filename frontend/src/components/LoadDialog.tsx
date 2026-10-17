@@ -57,8 +57,13 @@ export default function LoadDialog({ entry, prefill, mode = 'load', onClose, onD
 }) {
   const showSlots = SLOTTED_RECIPES.has(entry.recipe ?? '');
 
+  // Default a slotted recipe's slots to a VISIBLE 1 (not blank) when there is
+  // no prefill. Lemonade's --parallel now defaults to 1 when omitted, so a
+  // blank field would silently get one slot; showing 1 means what the operator
+  // sees is what HELM sends and read-back verifies — no hidden default. A
+  // reconfigure prefills the current value, so this only bites a fresh load.
   const [slots, setSlots] = useState<string>(
-    prefill?.slots != null ? String(prefill.slots) : '');
+    prefill?.slots != null ? String(prefill.slots) : (showSlots ? '1' : ''));
   const [ctxPerSlot, setCtxPerSlot] = useState<string>(
     prefill?.ctxPerSlot != null ? String(prefill.ctxPerSlot) : '');
   const [backend, setBackend] = useState<string>(prefill?.backend ?? '');
@@ -263,7 +268,7 @@ export default function LoadDialog({ entry, prefill, mode = 'load', onClose, onD
 
         <label className="field">
           <span>Extra llama.cpp arguments (advanced)</span>
-          <input value={extraArgs} placeholder="--flash-attn on --no-mmap"
+          <input value={extraArgs} placeholder="--flash-attn on --load-mode none"
             onChange={(e) => setExtraArgs(e.target.value)} />
           <span className="stat-sub">
             Context and device arguments are reserved — Lemonade wires those itself and will

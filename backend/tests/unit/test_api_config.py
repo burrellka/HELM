@@ -51,7 +51,10 @@ class StubClient:
             return self.health
         if "/models" in path:
             return _fixture("models")
-        if path.endswith("/params"):
+        if path.endswith("/params") or path.endswith("/internal/config"):
+            # /api/v1/params was removed in Lemonade 11.8; the global-config read
+            # now uses the admin-gated /internal/config, which returns the same
+            # flat config.json shape.
             return _fixture("params")
         return {"ok": True}
 

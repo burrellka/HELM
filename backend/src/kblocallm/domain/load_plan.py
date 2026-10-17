@@ -37,6 +37,7 @@ from .llamacpp_args import (
     TOP_K_FLAGS,
     TOP_P_FLAGS,
     ParseStatus,
+    find_deprecated,
     find_flag,
     find_reserved,
     lookup_int,
@@ -146,6 +147,18 @@ def plan_load(
             f"Lemonade will reject these arguments: {', '.join(reserved)}. They are how it "
             f"auto-wires context, MTP, vision and device placement, so it owns them. Set "
             f"context with the slots and context-per-slot fields instead of passing them raw.",
+        ))
+
+    # --- deprecated/removed args. A hard failure that evicts the fleet. -----
+    # `--no-mmap` became `error: invalid argument` in 2026.42.1; llama-server
+    # exits and the failed load takes the whole fleet with it. Block it here
+    # with the replacement, before the load request is ever built.
+    for flag, replacement in find_deprecated(intent.extra_args):
+        issues.append(PlanIssue(
+            Level.ERROR, "deprecated_arg",
+            f"{flag} was removed in a recent Lemonade release and now hard-fails the load — "
+            f"llama-server exits and the eviction it triggers takes the rest of the fleet down "
+            f"with it. Use {replacement} instead.",
         ))
 
     # A raw --parallel would fight the slots field and silently win or lose

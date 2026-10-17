@@ -286,12 +286,19 @@ async def export_model_config(model_id: str, request: Request) -> dict:
 
 @router.get("/global")
 async def read_global_config(request: Request) -> dict:
-    """Read-first. The live config.json, from /api/v1/params."""
+    """Read-first. The live config.json, from /internal/config.
+
+    The old unauth /api/v1/params was removed in Lemonade 11.8; its replacement
+    /internal/config is admin-key-gated, so this screen now needs the key.
+    """
     client = _client(request)
     try:
-        params = await client.request("GET", "/api/v1/params", timeout=FAST)
+        params = await client.request("GET", "/internal/config", admin=True, timeout=FAST)
     except UpstreamError as e:
         raise HTTPException(status_code=502, detail=f"{e.kind}: {e}")
+    # Tolerate a {"config": {...}} wrapper in case the new endpoint nests it.
+    if isinstance(params.get("config"), dict):
+        params = params["config"]
     # Drop the generator banner if present; it is not a settable key.
     params = {k: v for k, v in params.items() if k != "_generated"}
     return {"text": json.dumps(params, indent=2), "current": params}
@@ -307,7 +314,10 @@ async def validate_global(body: GlobalEditBody, request: Request) -> ValidationO
     current = body.current
     if current is None:
         try:
-            current = await _client(request).request("GET", "/api/v1/params", timeout=FAST)
+            current = await _client(request).request(
+                "GET", "/internal/config", admin=True, timeout=FAST)
+            if isinstance(current.get("config"), dict):
+                current = current["config"]
             current = {k: v for k, v in current.items() if k != "_generated"}
         except UpstreamError:
             current = {}

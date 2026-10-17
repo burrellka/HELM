@@ -140,6 +140,13 @@ async def dashboard(request: Request, refresh_static: bool = False) -> Dashboard
     async def read(path: str):
         return await client.request("GET", path, timeout=FAST)
 
+    async def read_admin(path: str):
+        # /internal/* is key-gated (the old unauth /api/v1/params was removed in
+        # Lemonade 11.8). Keyless/read-only installs get NO_ADMIN_KEY here, which
+        # the GTT cross-check degrades to "unconfirmed" — the pool number itself
+        # comes from system-info/system-stats and needs no key.
+        return await client.request("GET", path, admin=True, timeout=FAST)
+
     # The three live reads, concurrently. Independent calls; serial round
     # trips would make our own latency part of the poll interval.
     live_results = await asyncio.gather(
@@ -160,10 +167,10 @@ async def dashboard(request: Request, refresh_static: bool = False) -> Dashboard
         errors["system_info"] = info_error
 
     params, params_error = await cache.get(
-        "params", lambda: read("/api/v1/params"), force=refresh_static,
+        "config", lambda: read_admin("/internal/config"), force=refresh_static,
     )
     if params_error:
-        errors["params"] = params_error
+        errors["config"] = params_error
 
     backend_states = {}
     if isinstance(health, dict):

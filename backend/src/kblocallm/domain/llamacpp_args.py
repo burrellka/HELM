@@ -70,6 +70,17 @@ RESERVED_FLAGS: tuple[str, ...] = (
 )
 
 
+#: Flags Lemonade removed or renamed, mapped to their replacement. Typing one
+#: is no longer a no-op warning: in 2026.42.1 `--no-mmap` is `error: invalid
+#: argument: --no-mmap`, llama-server exits, and the failed load evicts the
+#: fleet (confirmed on the box). So HELM blocks these in the planner BEFORE the
+#: load request, with the replacement named. One map, next to the parser, same
+#: F4 reason as RESERVED_FLAGS: the spelling lives in exactly one place.
+DEPRECATED_FLAGS: dict[str, str] = {
+    "--no-mmap": "--load-mode none",
+}
+
+
 class ParseStatus(str, Enum):
     """Why you did or didn't get a value. All three are load-bearing.
 
@@ -315,4 +326,20 @@ def find_reserved(args: str | None) -> list[str]:
     for occurrence in find_flag(args, RESERVED_FLAGS):
         if occurrence.flag not in hits:
             hits.append(occurrence.flag)
+    return hits
+
+
+def find_deprecated(args: str | None) -> list[tuple[str, str]]:
+    """Deprecated/removed flags present, each paired with its replacement.
+
+    Same mechanism as `find_reserved` (one parser, F4), but these are blocked
+    for a different reason: they are not Lemonade-owned, they are simply gone,
+    and passing one now hard-fails the load and evicts the fleet.
+    """
+    hits: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for occurrence in find_flag(args, tuple(DEPRECATED_FLAGS)):
+        if occurrence.flag not in seen:
+            seen.add(occurrence.flag)
+            hits.append((occurrence.flag, DEPRECATED_FLAGS[occurrence.flag]))
     return hits
