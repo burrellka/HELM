@@ -32,6 +32,11 @@ class StubClient:
         self.health = health if health is not None else _fixture("health")
         self.sent: list[tuple[str, str, dict | None]] = []
         self.fail_with: UpstreamError | None = None
+        #: When True with fail_with set, a failed /api/v1/load first evicts every
+        #: OTHER model from health — Lemonade evicts to make room before the load
+        #: lands, so a load that then fails takes them with it. Models the exact
+        #: fleet-wipe the snapshot/restore protection exists for.
+        self.evict_on_failed_load: bool = False
         #: What /api/v1/downloads returns (the download-jobs endpoint).
         self.downloads: list[dict] = []
 
@@ -48,6 +53,12 @@ class StubClient:
                       json_body=None, params=None):
         self.sent.append((method, path, json_body))
         if self.fail_with is not None and method == "POST":
+            if path == "/api/v1/load" and self.evict_on_failed_load and json_body:
+                target = json_body.get("model_name")
+                self.health["all_models_loaded"] = [
+                    m for m in self.health.get("all_models_loaded") or []
+                    if m.get("model_name") == target
+                ]
             raise self.fail_with
         if path == "/internal/pin":
             # Realistic: the flag flips in /health, so the read-back sees it.
@@ -197,6 +208,62 @@ def test_an_upstream_refusal_keeps_its_kind(app_client):
     assert r.status_code == 200
     assert r.json()["performed"] is False
     assert r.json()["error_kind"] == "rejected"
+
+
+# -- fleet snapshot + restore-on-failure (P1) ------------------------------
+
+
+def test_failed_load_reports_what_it_evicted(app_client):
+    """The confirmed fleet-wipe: a load that fails still evicts resident models
+    (pinned included). HELM must name them and offer them for restore."""
+    app_client.stub.health = {"all_models_loaded": [
+        {"model_name": "target", "recipe": "llamacpp", "loaded": True},
+        {"model_name": "gemma-26b", "recipe": "llamacpp", "loaded": True, "pinned": True},
+        {"model_name": "hermes-8b", "recipe": "llamacpp", "loaded": True, "pinned": False},
+    ]}
+    app_client.stub.fail_with = UpstreamError(
+        kind=UpstreamErrorKind.UNREACHABLE, message="llama-server failed to start", status_code=500,
+    )
+    app_client.stub.evict_on_failed_load = True
+
+    r = app_client.post("/api/v1/control/load?confirm=true", json={"model_name": "target"})
+    body = r.json()
+    assert body["performed"] is False
+    assert set(body["evicted"]) == {"gemma-26b", "hermes-8b"}
+    restorable = {m["model_name"]: m["pinned"] for m in body["restorable"]}
+    assert restorable == {"gemma-26b": True, "hermes-8b": False}
+
+
+def test_successful_load_reports_no_eviction(app_client):
+    """No false alarm: a load that succeeds reports an empty evicted list even
+    though other models are resident."""
+    app_client.stub.health = {"all_models_loaded": [
+        {"model_name": "other", "recipe": "llamacpp", "loaded": True, "pinned": True},
+    ]}
+    r = app_client.post("/api/v1/control/load?confirm=true", json={"model_name": "target"})
+    body = r.json()
+    assert body["performed"] is True
+    assert body["evicted"] == []
+    assert body["restorable"] == []
+
+
+def test_restore_reloads_by_name_and_repins(app_client):
+    """Restore reloads each evicted model BY NAME (Lemonade re-applies the saved
+    recipe — HELM re-sends no options) and re-pins the ones that were pinned."""
+    r = app_client.post("/api/v1/control/restore", json={"models": [
+        {"model_name": "gemma-26b", "pinned": True},
+        {"model_name": "hermes-8b", "pinned": False},
+    ]})
+    assert r.status_code == 200
+    assert all(m["ok"] for m in r.json()["restored"])
+
+    loads = [s for s in app_client.stub.sent if s[1] == "/api/v1/load"]
+    # Each restored by name only — no ctx_size/llamacpp_args re-sent.
+    assert {s[2]["model_name"] for s in loads} == {"gemma-26b", "hermes-8b"}
+    assert all(set(s[2].keys()) == {"model_name"} for s in loads)
+    # Only the pinned one got re-pinned.
+    pins = [s for s in app_client.stub.sent if s[1] == "/internal/pin"]
+    assert [p[2]["model_name"] for p in pins] == ["gemma-26b"]
 
 
 # -- pin via the dedicated /internal/pin route (14c §2.1, trace-confirmed) --

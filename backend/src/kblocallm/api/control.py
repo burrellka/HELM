@@ -73,6 +73,16 @@ class ActionOut(BaseModel):
     #: no-op into a visible failure.
     verified: bool | None = None
     verify_note: str | None = None
+    #: Models that were resident BEFORE this action and are gone AFTER it. On a
+    #: FAILED load this is pure loss — Lemonade evicts to make room before the
+    #: load, so a load that then fails takes other models (pinned included) down
+    #: with it (confirmed on the box, 3x). Populated only when a load fails and
+    #: eviction is detected; empty otherwise.
+    evicted: list[str] = Field(default_factory=list)
+    #: The one-click restore set for `evicted`: each model with the pinned state
+    #: it had, to reload by name (Lemonade re-applies its saved recipe). The UI
+    #: offers this; it does not auto-reload, because each reload is 10-20s.
+    restorable: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class LoadBody(BaseModel):
@@ -207,15 +217,106 @@ async def load(body: LoadBody, request: Request, confirm: bool = False) -> Actio
             "Operator load of %s will evict NPU incumbent(s): %s",
             body.model_name, ", ".join(plan.evicts),
         )
+
+    # Snapshot the resident fleet BEFORE the load. Lemonade evicts to make room
+    # before the load completes, so if the load fails the evicted models (pinned
+    # included) are simply gone. We capture who was loaded, with their pinned
+    # state, so a failed load can offer a one-click restore instead of leaving
+    # the operator to notice the fleet is missing.
+    before = _resident(health, exclude=body.model_name)
+
     action = await _perform(client, "/api/v1/load", plan.body, out)
+
+    if not action.performed:
+        # The load failed. Anything that was resident and is now gone was
+        # evicted to make room for a load that never landed — pure loss.
+        evicted = await _detect_evicted(client, before)
+        if evicted:
+            logger.warning(
+                "Failed load of %s evicted resident model(s): %s",
+                body.model_name, ", ".join(e["model_name"] for e in evicted),
+            )
+            action.evicted = [e["model_name"] for e in evicted]
+            action.restorable = evicted
+        return action
+
     # 'performed' means Lemonade accepted the reload — NOT that it applied our
     # options. It can accept the call and reload with different args. Read back
     # and say so, rather than reporting a silent no-op as success. Only when we
     # actually sent options (top-level fields) to check.
-    if action.performed and any(k in plan.body for k in ("ctx_size", "llamacpp_args")):
+    if any(k in plan.body for k in ("ctx_size", "llamacpp_args")):
         action.verified, action.verify_note = await _verify_load(
             client, body.model_name, plan.body)
     return action
+
+
+def _resident(health: dict, *, exclude: str | None = None) -> list[dict[str, Any]]:
+    """The currently-loaded models as [{model_name, pinned}], minus `exclude`."""
+    out: list[dict[str, Any]] = []
+    for m in (health.get("all_models_loaded") or []):
+        if not isinstance(m, dict):
+            continue
+        name = m.get("model_name")
+        if name and name != exclude and m.get("loaded") is not False:
+            out.append({"model_name": name, "pinned": bool(m.get("pinned"))})
+    return out
+
+
+async def _detect_evicted(
+    client: LemonadeClient, before: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Which snapshotted models are no longer resident. A read failure returns
+    nothing — we never claim an eviction we cannot see."""
+    if not before:
+        return []
+    try:
+        health = await client.request("GET", "/api/v1/health", timeout=FAST)
+    except UpstreamError:
+        return []
+    still = {
+        m.get("model_name") for m in (health.get("all_models_loaded") or [])
+        if isinstance(m, dict) and m.get("loaded") is not False
+    }
+    return [m for m in before if m["model_name"] not in still]
+
+
+class RestoreBody(BaseModel):
+    #: Each {model_name, pinned} from a failed load's `restorable`.
+    models: list[dict[str, Any]] = Field(default_factory=list)
+
+
+@router.post("/restore")
+async def restore(body: RestoreBody, request: Request) -> dict:
+    """Reload models evicted by a failed load. Each by NAME, so Lemonade
+    re-applies its saved recipe — no options re-sent from HELM, nothing to get
+    wrong. Pinned state is re-applied after. Keeps going on a per-model failure
+    (one model refusing to reload must not abandon the rest) and reports each.
+    """
+    client = _client(request)
+    results: list[dict[str, Any]] = []
+    for item in body.models:
+        name = item.get("model_name")
+        if not name:
+            continue
+        try:
+            await client.request(
+                "POST", "/api/v1/load", admin=True,
+                json_body={"model_name": name}, timeout=CONTROL,
+            )
+            if item.get("pinned"):
+                try:
+                    await client.request(
+                        "POST", "/internal/pin", admin=True,
+                        json_body={"model_name": name, "pinned": True}, timeout=FAST,
+                    )
+                except UpstreamError as e:
+                    logger.warning("Restore re-pin of %s failed: %s", name, e)
+            results.append({"model_name": name, "ok": True})
+        except UpstreamError as e:
+            logger.warning("Restore of %s failed: %s", name, e)
+            results.append({"model_name": name, "ok": False,
+                            "error_kind": e.kind, "error_detail": str(e)})
+    return {"restored": results}
 
 
 async def _verify_load(

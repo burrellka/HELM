@@ -323,6 +323,11 @@ export interface ActionResult {
    *  than were sent (e.g. a dropped --parallel). null = nothing to verify. */
   verified?: boolean | null;
   verify_note?: string | null;
+  /** Models evicted by a FAILED load (pure loss — Lemonade evicts before the
+   *  load lands). Empty unless a load failed and eviction was detected. */
+  evicted?: string[];
+  /** One-click restore set for `evicted`: reload each by name, re-pin. */
+  restorable?: { model_name: string; pinned: boolean }[];
 }
 
 export interface LoadRequest {
@@ -711,6 +716,12 @@ export const api = {
     request<ActionResult>(`/control/load${qs({ confirm })}`, {
       method: 'POST', body: JSON.stringify(body),
     }),
+
+  /** Reload models a failed load evicted — each by name (Lemonade re-applies its
+   *  saved recipe), re-pinning as it goes. */
+  restoreFleet: (models: { model_name: string; pinned: boolean }[]) =>
+    request<{ restored: { model_name: string; ok: boolean; error_detail?: string }[] }>(
+      '/control/restore', { method: 'POST', body: JSON.stringify({ models }) }),
 
   unload: (model_name: string, confirm = false) =>
     request<ActionResult>(`/control/unload${qs({ confirm })}`, {

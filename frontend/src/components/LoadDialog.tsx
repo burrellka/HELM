@@ -66,7 +66,13 @@ export default function LoadDialog({ entry, prefill, mode = 'load', onClose, onD
     prefill?.slots != null ? String(prefill.slots) : (showSlots ? '1' : ''));
   const [ctxPerSlot, setCtxPerSlot] = useState<string>(
     prefill?.ctxPerSlot != null ? String(prefill.ctxPerSlot) : '');
-  const [backend, setBackend] = useState<string>(prefill?.backend ?? '');
+  // Default a slotted recipe's backend to an explicit rocm (not "auto"). Since
+  // the upgrade, Lemonade's auto prefers Vulkan — which it can't see the memory
+  // of — and --save-options REPLACES the option set, so an omitted backend is
+  // dropped on save. An explicit, visible rocm is the safety net HALO asked for;
+  // a reconfigure prefills the model's current backend.
+  const [backend, setBackend] = useState<string>(
+    prefill?.backend ?? (showSlots ? 'rocm' : ''));
   const [pinned, setPinned] = useState(entry.pinned);
   const [extraArgs, setExtraArgs] = useState(prefill?.extraArgs ?? '');
   const [saveOptions, setSaveOptions] = useState(true);
@@ -83,6 +89,9 @@ export default function LoadDialog({ entry, prefill, mode = 'load', onClose, onD
   const [plan, setPlan] = useState<Plan | null>(null);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  // Models a failed load evicted (pure loss), offered for one-click restore.
+  const [restorable, setRestorable] = useState<{ model_name: string; pinned: boolean }[]>([]);
+  const [restoreNote, setRestoreNote] = useState<string | null>(null);
 
   // An empty or non-numeric sampling field means "leave it unset" — null, not
   // zero. A zero min-p is a real, different instruction from "don't set min-p".
@@ -120,15 +129,38 @@ export default function LoadDialog({ entry, prefill, mode = 'load', onClose, onD
     return () => clearTimeout(id);
   }, [request]);
 
+  const restoreFleet = async () => {
+    setBusy(true); setRestoreNote(null);
+    try {
+      const r = await api.restoreFleet(restorable);
+      const failed = r.restored.filter((m) => !m.ok);
+      if (failed.length === 0) {
+        setRestoreNote(`Restored ${r.restored.length} model(s).`);
+        setRestorable([]);
+      } else {
+        setRestoreNote(`Restored ${r.restored.length - failed.length}/${r.restored.length}; `
+          + `could not reload: ${failed.map((m) => m.model_name).join(', ')}.`);
+      }
+    } catch (e) {
+      setRestoreNote(`Restore failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally { setBusy(false); }
+  };
+
   const submit = async (confirm: boolean) => {
     setBusy(true);
     setFailure(null);
+    setRestorable([]);
+    setRestoreNote(null);
     try {
       const result = await api.load(request(), confirm);
       if (!result.performed) {
         // The upstream refused. Keep the KIND — a rejected key, an
         // exclusivity refusal and a timeout need different reactions.
         setFailure(`${result.error_kind}: ${result.error_detail}`);
+        // A failed load can evict resident models (pinned included) before it
+        // fails. If it did, offer to reload them rather than leave the operator
+        // to discover the fleet is gone.
+        if (result.restorable?.length) setRestorable(result.restorable);
         return;
       }
       if (result.verified === false) {
@@ -178,6 +210,20 @@ export default function LoadDialog({ entry, prefill, mode = 'load', onClose, onD
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
         {failure && <Callout tone="bad" title="Lemonade refused">{failure}</Callout>}
+
+        {restorable.length > 0 && (
+          <Callout tone="warn" title="This failed load evicted resident models">
+            <div>Lemonade evicted these to make room, then the load failed — so they are gone:{' '}
+              <strong>{restorable.map((m) => m.model_name).join(', ')}</strong>.</div>
+            <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <button type="button" className="btn-primary" disabled={busy}
+                onClick={() => void restoreFleet()}>
+                {busy ? 'Restoring…' : `Reload ${restorable.length} evicted model(s)`}
+              </button>
+              {restoreNote && <span className="stat-sub">{restoreNote}</span>}
+            </div>
+          </Callout>
+        )}
 
         {mode === 'reconfigure' && (
           // Lemonade has no "change options without restarting" call, so
