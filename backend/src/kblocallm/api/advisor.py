@@ -38,7 +38,7 @@ from ..domain.hf_resolve import RepoConfidence, resolve_repo
 from ..domain.pool import extract_pool
 from ..domain.system_profile import advisor_hardware_context, extract_system_profile
 from ..config import get_settings as get_app_settings
-from ..upstream.client import CONTROL, FAST, LemonadeClient, UpstreamError
+from ..upstream.client import COMPLETION, CONTROL, FAST, LemonadeClient, UpstreamError
 from ..web_search import web_search
 
 logger = logging.getLogger(__name__)
@@ -622,8 +622,15 @@ async def summarize(model_id: str, request: Request) -> dict:
                     )},
                 ],
                 "max_tokens": _SUMMARY_MAX_TOKENS, "stream": False,
+                # A Summary is a short, deterministic 2-4 sentence answer — never
+                # a reasoning dump. Post-2026.42.1 thinking is ON by default, and
+                # the ONLY lever that works is the NESTED chat_template_kwargs
+                # (top-level enable_thinking is ignored). Without this, a reasoning
+                # model picked for Summary spends its 500-token budget thinking and
+                # returns empty. This makes Summary robust regardless of the model.
+                "chat_template_kwargs": {"enable_thinking": False},
             },
-            timeout=CONTROL,
+            timeout=COMPLETION,
         )
     except UpstreamError as e:
         return {"generated": True, "available": False, "model": summary_model,
@@ -726,8 +733,12 @@ async def _synthesize(
                     )},
                 ],
                 "max_tokens": _SYNTHESIS_MAX_TOKENS, "stream": False,
+                # Analyze is the deep teaching write-up — reasoning is WANTED
+                # here, so we send no enable_thinking and respect the model's
+                # loaded default. The generous budget + reasoned-fallback handle
+                # a reasoning model; the COMPLETION timeout clears cold prefill.
             },
-            timeout=CONTROL,
+            timeout=COMPLETION,
         )
     except UpstreamError as e:
         return {"generated": True, "available": False, "model": analysis_model,
@@ -820,7 +831,7 @@ async def advisor_chat(body: ChatBody, request: Request) -> dict:
             "POST", "/api/v1/chat/completions",
             json_body={"model": analysis_model, "messages": messages,
                        "max_tokens": _CHAT_MAX_TOKENS, "stream": False},
-            timeout=CONTROL,
+            timeout=COMPLETION,
         )
     except UpstreamError as e:
         raise HTTPException(status_code=502, detail=f"Analysis model unavailable: {e}")

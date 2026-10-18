@@ -56,6 +56,15 @@ TRANSFER = httpx.Timeout(connect=5.0, read=300.0, write=30.0, pool=5.0)
 # tolerance. Pair with a keepalive on OUR side (see stream_lines + F5).
 STREAM = httpx.Timeout(connect=5.0, read=None, write=30.0, pool=5.0)
 
+# Non-streaming LLM completions (the Advisor's Summary/Analyze/Chat, the
+# benchmark). The 2026.42.1 upgrade made cold prefill at large context ~100s,
+# and a 26B reasoning answer adds a minute-plus on top — so `read` has to clear
+# ~300s or HELM reports a timeout for an answer that was still coming. The
+# connect stays SHORT (15s): a dead or wiped box must fail fast, not hang the
+# whole 300s window. Cross-project contract — siblings use the same split
+# (docs: lemonade-upgrade-and-provider-contract-for-sibling-devs).
+COMPLETION = httpx.Timeout(connect=15.0, read=300.0, write=30.0, pool=5.0)
+
 
 class UpstreamErrorKind:
     """Distinct failure classes. Never collapse these into one message.

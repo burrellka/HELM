@@ -30,7 +30,7 @@ from pydantic import BaseModel, Field
 from ..domain.load_plan import NPU_RECIPES, LoadIntent, plan_load
 from ..domain.logs import classify
 from ..storage.metadata import WarmSetStore
-from ..upstream.client import CONTROL, FAST, LemonadeClient, UpstreamError
+from ..upstream.client import COMPLETION, CONTROL, FAST, LemonadeClient, UpstreamError
 
 logger = logging.getLogger(__name__)
 
@@ -371,8 +371,14 @@ async def benchmark(body: BenchBody, request: Request) -> BenchOut:
                 "messages": [{"role": "user", "content": SCENARIOS[body.scenario]}],
                 "max_tokens": body.max_tokens,
                 "stream": False,
+                # A throughput probe must measure the model ANSWERING, not
+                # thinking. Post-2026.42.1 thinking defaults ON, so a short
+                # max_tokens budget would be spent in the reasoning channel and
+                # return empty — a meaningless benchmark. Pin it off (nested; the
+                # top-level flag is ignored) for a clean, comparable measurement.
+                "chat_template_kwargs": {"enable_thinking": False},
             },
-            timeout=CONTROL,
+            timeout=COMPLETION,
         )
     except UpstreamError as e:
         _store_run(request, body, started, None, config_note, error=str(e))

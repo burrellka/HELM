@@ -186,6 +186,25 @@ def test_synthesis_failure_is_honest_not_faked(client):
     assert "unavailable" in syn["note"]
 
 
+def test_summary_pins_thinking_off(client):
+    """Post-2026.42.1 thinking is ON by default and only the NESTED
+    chat_template_kwargs lever works. A Summary is short + deterministic, so it
+    must disable thinking or a reasoning model spends its 500-token budget
+    thinking and returns empty."""
+    client.post(f"/api/v1/advisor/summarize/{GEMMA}")
+    body = client.stub.last_chat_body
+    assert body["chat_template_kwargs"]["enable_thinking"] is False
+
+
+def test_analyze_leaves_thinking_to_the_model(client):
+    """Analyze is the deep teaching write-up — reasoning is WANTED there, so HELM
+    sends no enable_thinking and respects the model's loaded default (the generous
+    budget + reasoned-fallback handle a reasoning model)."""
+    client.post(f"/api/v1/advisor/analyze/{GEMMA}?synthesize=true")
+    body = client.stub.last_chat_body
+    assert "chat_template_kwargs" not in body
+
+
 def test_reasoning_starvation_is_named_not_a_blank(client):
     """The token-budget gotcha: a reasoning model spends its whole budget on
     the hidden reasoning_content channel and emits empty content at
