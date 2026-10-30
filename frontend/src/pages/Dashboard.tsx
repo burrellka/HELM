@@ -25,6 +25,7 @@ import {
   type ConcurrencyView,
   type CtxDriftRow,
   type Dashboard as DashboardData,
+  type GoldenDriftView,
   type Liveness,
   type ModelDetail,
   type ModelRow,
@@ -75,6 +76,10 @@ export default function Dashboard({ managementEnabled = false, onConfigure, onUp
    *  row), so an unmatched/unknown model can never get a pill — the architect's
    *  rule holds by construction. Off the 5s poll: it changes rarely. */
   const [updatable, setUpdatable] = useState<Set<string>>(new Set());
+  /** Model names that have a golden config pinned. The DRIFT itself rides on
+   *  each row (golden_drift, in the 5s payload); this set only tells the row
+   *  whether to offer "Pin golden" or "Re-pin / Clear". */
+  const [goldenPinned, setGoldenPinned] = useState<Set<string>>(new Set());
   /** A pending destructive action awaiting confirmation. The 409 flow: HELM
    *  returns the plan, we show what it will evict, THEN the operator decides. */
   const [pending, setPending] = useState<{ plan: Plan; run: () => Promise<void> } | null>(null);
@@ -125,6 +130,31 @@ export default function Dashboard({ managementEnabled = false, onConfigure, onUp
     }
   }, []), UPDATE_POLL_MS);
 
+  const refreshGolden = useCallback(async () => {
+    try {
+      const { golden } = await api.listGolden();
+      setGoldenPinned(new Set(Object.keys(golden)));
+    } catch {
+      // A failed read just means the pin/clear buttons may lag a cycle. The
+      // drift alarm itself rides on the dashboard payload and is unaffected.
+    }
+  }, []);
+  usePoll(refreshGolden, UPDATE_POLL_MS);
+
+  /** Pin today's running config as the golden, or clear the pin. HELM-local —
+   *  no Lemonade write, no confirm flow — then refresh so the badge + buttons
+   *  reflect it immediately. */
+  const golden = useCallback(async (modelName: string, action: 'pin' | 'clear') => {
+    try {
+      if (action === 'pin') await api.pinGolden(modelName);
+      else await api.clearGolden(modelName);
+      await refreshGolden();
+      setData(await api.dashboard());
+    } catch (e) {
+      setFetchError(e instanceof Error ? e.message : String(e));
+    }
+  }, [refreshGolden]);
+
   /**
    * Run a control action, routing the 409 "needs confirmation" response into a
    * dialog rather than treating it as an error.
@@ -167,7 +197,7 @@ export default function Dashboard({ managementEnabled = false, onConfigure, onUp
       {data && (
         <ModelsTable models={data.models} managementEnabled={managementEnabled} act={act}
           onConfigure={onConfigure} onUpdate={onUpdate} onOpenDetail={onOpenDetail}
-          drift={drift} updatable={updatable} />
+          drift={drift} updatable={updatable} goldenPinned={goldenPinned} onGolden={golden} />
       )}
       {data?.throughput && <ThroughputStrip throughput={data.throughput} />}
       {data && <FooterNote version={data.lemonade_version} managementEnabled={managementEnabled} />}
@@ -445,13 +475,15 @@ function Capacity({ resources }: { resources: ResourceView }) {
 
 type Act = (attempt: (confirm: boolean) => Promise<unknown>) => Promise<void>;
 
-function ModelsTable({ models, managementEnabled, act, onConfigure, onUpdate, onOpenDetail, drift, updatable }: {
+function ModelsTable({ models, managementEnabled, act, onConfigure, onUpdate, onOpenDetail, drift, updatable, goldenPinned, onGolden }: {
   models: ModelRow[]; managementEnabled: boolean; act: Act;
   onConfigure?: (modelName: string) => void;
   onUpdate?: (modelName: string) => void;
   onOpenDetail?: (modelName: string) => void;
   drift: Record<string, CtxDriftRow>;
   updatable: Set<string>;
+  goldenPinned: Set<string>;
+  onGolden: (modelName: string, action: 'pin' | 'clear') => Promise<void>;
 }) {
   if (!models.length) {
     return (
@@ -481,6 +513,7 @@ function ModelsTable({ models, managementEnabled, act, onConfigure, onUpdate, on
             <Row key={m.model_name} model={m} managementEnabled={managementEnabled} act={act}
               onConfigure={onConfigure} onUpdate={onUpdate} onOpenDetail={onOpenDetail}
               drift={drift[m.model_name]} updateAvailable={updatable.has(m.model_name)}
+              goldenPinned={goldenPinned.has(m.model_name)} onGolden={onGolden}
               colSpan={managementEnabled ? 9 : 8} />
           ))}
         </tbody>
@@ -508,13 +541,15 @@ function Td({ children, title }: { children: React.ReactNode; title?: string }) 
   );
 }
 
-function Row({ model, managementEnabled, act, onConfigure, onUpdate, onOpenDetail, drift, updateAvailable, colSpan }: {
+function Row({ model, managementEnabled, act, onConfigure, onUpdate, onOpenDetail, drift, updateAvailable, goldenPinned, onGolden, colSpan }: {
   model: ModelRow; managementEnabled: boolean; act: Act;
   onConfigure?: (modelName: string) => void;
   onUpdate?: (modelName: string) => void;
   onOpenDetail?: (modelName: string) => void;
   drift?: CtxDriftRow;
   updateAvailable?: boolean;
+  goldenPinned?: boolean;
+  onGolden?: (modelName: string, action: 'pin' | 'clear') => Promise<void>;
   colSpan: number;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -534,6 +569,7 @@ function Row({ model, managementEnabled, act, onConfigure, onUpdate, onOpenDetai
           >{expanded ? '▾' : '▸'}</button>
           <span style={{ fontWeight: 600 }}>{model.model_name}</span>
           {updateAvailable && <UpdatePill onClick={() => onUpdate?.(model.model_name)} />}
+          {model.golden_drift && <GoldenDriftBadge drift={model.golden_drift} />}
         </div>
         {model.checkpoint && (
           <div className="stat-sub mono" style={{
@@ -585,6 +621,26 @@ function Row({ model, managementEnabled, act, onConfigure, onUpdate, onOpenDetai
               title="Requests in flight will fail. Reloading costs 10-20s."
               onClick={() => void act((confirm) => api.unload(model.model_name, confirm))}
             >Unload</button>
+            {onGolden && (goldenPinned ? (
+              <>
+                <button
+                  type="button" className="btn-secondary"
+                  title="Re-capture today's running config as the golden baseline (after a blessed change)."
+                  onClick={() => void onGolden(model.model_name, 'pin')}
+                >Re-pin golden</button>
+                <button
+                  type="button" className="btn-secondary"
+                  title="Stop checking this model against a golden baseline."
+                  onClick={() => void onGolden(model.model_name, 'clear')}
+                >Clear golden</button>
+              </>
+            ) : (
+              <button
+                type="button" className="btn-secondary"
+                title="Pin the running config as a golden baseline. HELM then flags any later drift from it (above all a dropped --reasoning off). No auto re-apply."
+                onClick={() => void onGolden(model.model_name, 'pin')}
+              >Pin golden</button>
+            ))}
           </div>
         </Td>
       )}
@@ -668,6 +724,31 @@ function UpdatePill({ onClick }: { onClick: () => void }) {
         fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.02em', whiteSpace: 'nowrap',
       }}
     >update available</button>
+  );
+}
+
+/** The golden-config drift alarm. Loud (bad) when the critical --reasoning flag
+ *  drifted; amber otherwise; grey when a golden exists but the running config
+ *  couldn't be read. Only rendered when there IS drift (a clean match arrives
+ *  as null golden_drift), so its presence alone means "look at this". */
+function GoldenDriftBadge({ drift }: { drift: GoldenDriftView }) {
+  const unknown = drift.state === 'unknown';
+  const tone = unknown ? 'var(--text-secondary)'
+    : drift.has_critical ? 'var(--status-bad)' : 'var(--status-warn)';
+  const label = unknown ? 'golden: unverified'
+    : drift.has_critical ? 'config drift — reasoning!' : 'config drift';
+  const detail = unknown
+    ? "HELM has a golden baseline for this model but couldn't read the running config to compare."
+    : drift.items.map((i) => `${i.key}: golden ${i.golden ?? 'unset'} → running ${i.running ?? 'unset'}`).join('\n');
+  return (
+    <span
+      title={`Running config differs from the pinned golden:\n${detail}`}
+      style={{
+        cursor: 'help', border: `1px solid ${tone}`, color: tone, borderRadius: 999,
+        padding: '0.0625rem 0.5rem', fontSize: '0.6875rem', fontWeight: 700,
+        letterSpacing: '0.02em', whiteSpace: 'nowrap',
+      }}
+    >⚠ {label}</span>
   );
 }
 

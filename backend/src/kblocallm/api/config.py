@@ -31,7 +31,9 @@ from ..domain.config_edit import (
     validate_global_config,
     validate_recipe_options,
 )
+from ..domain.golden import capture_from_record
 from ..storage.config_backups import ConfigBackupStore
+from ..storage.golden import GoldenConfigStore
 from ..upstream.client import CONTROL, FAST, LemonadeClient, UpstreamError
 
 logger = logging.getLogger(__name__)
@@ -416,3 +418,69 @@ async def restore_backup(backup_id: int, request: Request, confirm: bool = False
     except UpstreamError as e:
         return {"restored": False, "error_kind": e.kind, "error_detail": str(e)}
     return {"restored": True, "model_id": model_id}
+
+
+# ── golden config pins (KAIROS/KODIAK ask, 2026-10-29) ──────────────────────
+# A HELM-owned baseline the dashboard checks the running config against, so a
+# silently-dropped load arg (above all --reasoning off) is visible. Detect-and-
+# alert only: these endpoints store/read/clear the baseline; nothing here (or
+# anywhere) auto re-applies it — that write waits on the architect's ruling.
+#
+# HELM-LOCAL data, like model metadata/tags: no Lemonade admin key required to
+# pin or clear (pinning reads /health and writes HELM's own DB). The read of
+# /health is the only upstream call, and a miss there is reported, not faked.
+
+
+class GoldenNote(BaseModel):
+    note: str = ""
+
+
+@router.get("/golden")
+def list_golden(request: Request) -> dict:
+    """Every pinned golden, so the UI can show which models are protected."""
+    goldens = GoldenConfigStore(request.app.state.db).all()
+    return {"golden": {
+        mid: {
+            "ctx_size": g.ctx_size, "llamacpp_backend": g.llamacpp_backend,
+            "backend_build": g.backend_build, "llamacpp_args": g.llamacpp_args,
+            "note": g.note, "captured_at": g.captured_at,
+        } for mid, g in goldens.items()
+    }}
+
+
+@router.post("/golden/{model_id:path}")
+async def pin_golden(model_id: str, body: GoldenNote, request: Request) -> dict:
+    """Capture the model's CURRENT running config as its golden baseline.
+
+    Reads /health for the live record (recipe_options + launch_command → the
+    engine build), snapshots it, and stores it. Idempotent: re-pinning updates
+    the baseline to today's config — which is exactly what you do after a
+    deliberate, blessed change.
+    """
+    try:
+        health = await _client(request).request("GET", "/api/v1/health", timeout=FAST)
+    except UpstreamError as e:
+        raise HTTPException(status_code=502, detail=f"{e.kind}: {e}")
+    record = next((m for m in (health.get("all_models_loaded") or [])
+                   if isinstance(m, dict) and m.get("model_name") == model_id), None)
+    if record is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(f"{model_id} is not loaded, so HELM cannot capture its running config as a "
+                    f"golden. Load it with the args you want to pin, then pin it."))
+    golden = capture_from_record(model_id, record, note=body.note)
+    GoldenConfigStore(request.app.state.db).set(golden)
+    return {
+        "pinned": True, "model_id": model_id,
+        "golden": {
+            "ctx_size": golden.ctx_size, "llamacpp_backend": golden.llamacpp_backend,
+            "backend_build": golden.backend_build, "llamacpp_args": golden.llamacpp_args,
+        },
+    }
+
+
+@router.delete("/golden/{model_id:path}")
+def clear_golden(model_id: str, request: Request) -> dict:
+    """Remove a model's golden pin. The dashboard stops checking it."""
+    GoldenConfigStore(request.app.state.db).delete(model_id)
+    return {"cleared": True, "model_id": model_id}

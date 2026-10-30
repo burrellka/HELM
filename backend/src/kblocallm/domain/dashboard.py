@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 
 from .concurrency import ConcurrencyKind, derive_concurrency
 from .crash import BackendState, BackendStatus
+from .golden import GoldenConfig, GoldenState, compare_golden
 from .gpu_sensors import interpret_gpu_gauge
 from .pool import MemoryPool, PoolWarning, extract_pool
 
@@ -106,6 +107,20 @@ class ConcurrencyView(BaseModel):
     note: str | None = None
 
 
+class GoldenDriftItemView(BaseModel):
+    key: str
+    golden: str | None = None
+    running: str | None = None
+    critical: bool = False
+
+
+class GoldenDriftView(BaseModel):
+    #: "match" | "drift" | "unknown".
+    state: str
+    items: list[GoldenDriftItemView] = Field(default_factory=list)
+    has_critical: bool = False
+
+
 class ModelRow(BaseModel):
     model_name: str
     checkpoint: str | None = None
@@ -143,6 +158,11 @@ class ModelRow(BaseModel):
     pid: int | None = None
     port: int | None = None
     backend_url: str | None = None
+
+    #: Drift of the running config from the operator's golden baseline, when one
+    #: is pinned for this model. None = no golden pinned (the common case). This
+    #: is how a silently-dropped `--reasoning off` becomes a visible alarm.
+    golden_drift: GoldenDriftView | None = None
 
 
 class ThroughputView(BaseModel):
@@ -188,6 +208,24 @@ def _pool_view(pool: MemoryPool) -> PoolView:
         warning=pool.warning.value if isinstance(pool.warning, PoolWarning) else None,
         warning_detail=pool.warning_detail,
         gtt_enabled=pool.gtt_enabled,
+    )
+
+
+def _golden_drift(golden: GoldenConfig | None, model: dict[str, Any]) -> GoldenDriftView | None:
+    """Compare a model's running config to its golden, if one is pinned. None
+    when no golden exists (the common case) and when it MATCHES — the row only
+    carries a golden_drift object when there is something to say (drift or an
+    unverifiable read)."""
+    if golden is None:
+        return None
+    drift = compare_golden(golden, model)
+    if drift.state is GoldenState.MATCH:
+        return None
+    return GoldenDriftView(
+        state=drift.state.value,
+        items=[GoldenDriftItemView(key=i.key, golden=i.golden, running=i.running,
+                                   critical=i.critical) for i in drift.items],
+        has_critical=drift.has_critical,
     )
 
 
@@ -283,6 +321,7 @@ def build_dashboard(
     params: dict[str, Any] | None,
     backend_states: dict[str, BackendState] | None = None,
     *,
+    golden_configs: dict[str, GoldenConfig] | None = None,
     gpu_temp_c: float | None = None,
     gpu_power_w: float | None = None,
     reachable: bool = True,
@@ -299,6 +338,7 @@ def build_dashboard(
     health = health if isinstance(health, dict) else {}
     params = params if isinstance(params, dict) else {}
     backend_states = backend_states or {}
+    golden_configs = golden_configs or {}
 
     raw_models = health.get("all_models_loaded")
     raw_models = raw_models if isinstance(raw_models, list) else []
@@ -363,6 +403,7 @@ def build_dashboard(
                 pid=model.get("pid"),
                 port=_port(model),
                 backend_url=model.get("backend_url"),
+                golden_drift=_golden_drift(golden_configs.get(name), model),
             )
         )
 

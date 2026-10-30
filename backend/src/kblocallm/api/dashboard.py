@@ -33,6 +33,7 @@ from ..config import get_settings
 from ..domain.dashboard import Dashboard, SectionError, build_dashboard
 from ..domain.gpu_sensors import GpuSensors, read_gpu_sensors
 from ..storage.backends import BackendStateStore
+from ..storage.golden import GoldenConfigStore
 from ..upstream.client import FAST, LemonadeClient, UpstreamError, UpstreamErrorKind
 
 logger = logging.getLogger(__name__)
@@ -195,6 +196,16 @@ async def dashboard(request: Request, refresh_static: bool = False) -> Dashboard
                     ),
                 )
 
+    # Golden config pins — the operator's blessed baseline per model, so a
+    # silently-dropped load arg (above all --reasoning off) reads as drift on the
+    # row. Offloaded like the other SQLite reads; a DB failure costs the drift
+    # badge, never the table.
+    golden_configs = {}
+    try:
+        golden_configs = await asyncio.to_thread(GoldenConfigStore(request.app.state.db).all)
+    except Exception:  # noqa: BLE001
+        logger.exception("Golden config read failed")
+
     # Local GPU thermals — temp/power the kernel gets right even where the
     # utilization gauge is stuck. A tiny sysfs read, but offloaded like the
     # SQLite call so a blocking read on an odd /sys can't stall the event loop.
@@ -212,6 +223,7 @@ async def dashboard(request: Request, refresh_static: bool = False) -> Dashboard
         stats=stats,
         params=params,
         backend_states=backend_states,
+        golden_configs=golden_configs,
         gpu_temp_c=sensors.temp_c,
         gpu_power_w=sensors.power_w,
         reachable="health" not in errors,

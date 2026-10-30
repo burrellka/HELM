@@ -215,3 +215,35 @@ def test_config_writes_refuse_without_an_admin_key(readonly):
 def test_reading_config_works_without_an_admin_key(readonly):
     """Reading and validating are safe; only applying needs the key."""
     assert readonly.get(f"/api/v1/config/model/{MODEL}").status_code == 200
+
+
+# -- golden config pins ----------------------------------------------------
+
+
+def test_pin_list_and_clear_golden(client):
+    """Pin a loaded model's running config as golden, see it listed, clear it.
+    HELM-local: no admin key, no Lemonade write — just /health + HELM's DB."""
+    r = client.post(f"/api/v1/config/golden/{MODEL}", json={"note": "post-upgrade blessed"})
+    assert r.status_code == 200 and r.json()["pinned"] is True
+
+    listed = client.get("/api/v1/config/golden").json()["golden"]
+    assert MODEL in listed
+    # Captured verbatim from the model's current recipe_options (the fixture's args).
+    assert "--parallel 8" in listed[MODEL]["llamacpp_args"]
+    assert listed[MODEL]["note"] == "post-upgrade blessed"
+
+    assert client.delete(f"/api/v1/config/golden/{MODEL}").json()["cleared"] is True
+    assert MODEL not in client.get("/api/v1/config/golden").json()["golden"]
+
+
+def test_pin_golden_refuses_a_model_that_is_not_loaded(client):
+    """Can't capture a running config for a model that isn't running — say so,
+    don't pin an empty baseline."""
+    r = client.post("/api/v1/config/golden/not-a-loaded-model", json={})
+    assert r.status_code == 404
+
+
+def test_pin_golden_needs_no_admin_key(readonly):
+    """Golden is HELM-local operator data, like tags — it works read-only."""
+    r = readonly.post(f"/api/v1/config/golden/{MODEL}", json={})
+    assert r.status_code == 200

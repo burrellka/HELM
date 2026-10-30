@@ -254,6 +254,17 @@ export interface ModelRow {
   pid: number | null;
   port: number | null;
   backend_url: string | null;
+
+  /** Drift of the running config from the operator's golden baseline, when one
+   *  is pinned. null = no golden, or a clean match (the row says nothing). */
+  golden_drift: GoldenDriftView | null;
+}
+
+export interface GoldenDriftView {
+  /** 'drift' | 'unknown' (a clean 'match' arrives as null golden_drift). */
+  state: string;
+  items: { key: string; golden: string | null; running: string | null; critical: boolean }[];
+  has_critical: boolean;
 }
 
 export interface ThroughputView {
@@ -834,6 +845,19 @@ export const api = {
     request<{ restored: boolean }>(`/config/backups/${backupId}/restore${qs({ confirm })}`, {
       method: 'POST',
     }),
+
+  // ── golden config pins: detect-and-alert on silent arg drift ────────────────
+  listGolden: () =>
+    request<{ golden: Record<string, { ctx_size: number | null; llamacpp_backend: string | null;
+      backend_build: string | null; llamacpp_args: string; note: string; captured_at: string }> }>(
+      '/config/golden'),
+  pinGolden: (modelId: string, note = '') =>
+    request<{ pinned: boolean; model_id: string }>(
+      `/config/golden/${encodeURIComponent(modelId)}`,
+      { method: 'POST', body: JSON.stringify({ note }) }),
+  clearGolden: (modelId: string) =>
+    request<{ cleared: boolean }>(`/config/golden/${encodeURIComponent(modelId)}`,
+      { method: 'DELETE' }),
 
   // ── Model Advisor (14c Part 1): grounded, never recalled ────────────────────
 

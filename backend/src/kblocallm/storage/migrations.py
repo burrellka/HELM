@@ -351,6 +351,38 @@ _MIGRATIONS: list[tuple[int, str, str]] = [
         );
         """,
     ),
+    (
+        13,
+        "Golden config pins: the operator-blessed expected args + backend build",
+        """
+        -- A HELM-owned baseline of what a model SHOULD run with, independent of
+        -- whatever Lemonade currently has saved. The point (KAIROS/KODIAK ask,
+        -- 2026-10-29): a reload or Lemonade upgrade can silently drop a load arg
+        -- — most importantly `--reasoning off`, the lever that keeps the local
+        -- 26B answering directly instead of thinking — and nobody notices until
+        -- answers regress. HELM cannot PREVENT the box changing it (HELM does
+        -- not own lemond startup), but it can hold the golden and LOUDLY flag any
+        -- drift of the running config from it. Detect-and-alert ONLY: no auto
+        -- re-apply (that is a consequential write on inferred state — needs the
+        -- architect's ruling, same line as warm-on-startup).
+        --
+        -- `backend_build` is the llama.cpp build the golden was captured against
+        -- (e.g. 'llama-b11394', parsed from /health launch_command), so an
+        -- upgrade that swaps the engine is visible too. `llamacpp_args` is the
+        -- intended arg string at capture time; comparison tracks the
+        -- golden-significant flags only, so Lemonade's injected
+        -- --spec-type/--mmproj/--model-draft never read as drift.
+        CREATE TABLE IF NOT EXISTS golden_configs (
+            model_id         TEXT PRIMARY KEY,
+            ctx_size         INTEGER,
+            llamacpp_backend TEXT,
+            backend_build    TEXT,
+            llamacpp_args    TEXT NOT NULL DEFAULT '',
+            note             TEXT NOT NULL DEFAULT '',
+            captured_at      TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        """,
+    ),
 ]
 
 
