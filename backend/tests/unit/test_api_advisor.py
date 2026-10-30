@@ -26,6 +26,9 @@ class StubClient:
         #: When set, simulate a reasoning model that ate its whole budget: empty
         #: content, reasoning present, finish_reason=length.
         self.chat_starved = False
+        #: When set, simulate a PARTIAL answer that hit the cap: real content,
+        #: but finish_reason=length (cut off mid-thought). The truncation-note case.
+        self.chat_truncated = False
         #: The last chat/completions body, so a test can assert WHICH model was
         #: called and WHAT context it was fed (the summary path is verified this
         #: way: right model, starved prompt).
@@ -43,6 +46,9 @@ class StubClient:
             if self.chat_starved:
                 return {"choices": [{"finish_reason": "length", "message": {
                     "content": "", "reasoning_content": "thinking hard about this...", "role": "assistant"}}]}
+            if self.chat_truncated:
+                return {"choices": [{"finish_reason": "length",
+                                     "message": {"content": self.chat_reply}}]}
             return {"choices": [{"finish_reason": "stop", "message": {"content": self.chat_reply}}]}
         if "/models" in path:
             return _fixture("models")
@@ -68,6 +74,8 @@ class StubClient:
         if not self.chat_starved:
             for piece in ["Hello", " there", "."]:
                 yield frame({"choices": [{"delta": {"content": piece}}]})
+        if self.chat_truncated:
+            yield frame({"choices": [{"delta": {}, "finish_reason": "length"}]})
         # Usage-only trailing chunk, then DONE.
         yield frame({"choices": [], "usage": {
             "prompt_tokens": 8030, "completion_tokens": 3, "total_tokens": 8033,
@@ -203,6 +211,21 @@ def test_analyze_leaves_thinking_to_the_model(client):
     client.post(f"/api/v1/advisor/analyze/{GEMMA}?synthesize=true")
     body = client.stub.last_chat_body
     assert "chat_template_kwargs" not in body
+
+
+def test_truncated_summary_is_flagged(client):
+    """A PARTIAL answer at the length cap must be marked truncated — a
+    half-answer that looks complete is the confident-wrong failure HELM avoids."""
+    client.stub.chat_truncated = True
+    s = client.post(f"/api/v1/advisor/summarize/{GEMMA}").json()
+    assert s["available"] is True and s["text"]       # a real (partial) answer
+    assert s["truncated"] is True and s["finish_reason"] == "length"
+
+
+def test_complete_answer_is_not_flagged_truncated(client):
+    s = client.post(f"/api/v1/advisor/summarize/{GEMMA}").json()
+    assert s["available"] is True
+    assert s["truncated"] is False and s["finish_reason"] == "stop"
 
 
 def test_reasoning_starvation_is_named_not_a_blank(client):

@@ -37,6 +37,18 @@ export function Unknown({ children = 'unknown' }: { children?: React.ReactNode }
   return <span className="unknown">{children}</span>;
 }
 
+/** Shown under a generated answer that hit the token cap. A half-answer that
+ *  looks complete is the exact 'confident-wrong' failure HELM exists to avoid,
+ *  so a truncated reply says so plainly. Renders nothing unless `when`. */
+export function CutOffNote({ when }: { when?: boolean }) {
+  if (!when) return null;
+  return (
+    <div className="stat-sub" style={{
+      marginTop: '0.4rem', color: 'var(--status-warn)', fontWeight: 600,
+    }}>⚠ This answer was cut off at the length limit — ask to continue for the rest.</div>
+  );
+}
+
 export function Badge({ tone = 'neutral', title, children }: {
   tone?: 'neutral' | 'good' | 'warn' | 'bad' | 'accent';
   title?: string;

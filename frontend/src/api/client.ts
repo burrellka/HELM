@@ -598,6 +598,9 @@ export interface AdvisorChatEvent {
   note?: string;
   kind?: string;
   detail?: string;
+  finish_reason?: string | null;
+  /** A PARTIAL answer that hit the token cap — real but cut off mid-thought. */
+  truncated?: boolean;
 }
 
 /** A generated block from Summary (§1.10) or the deep synthesis. `available`
@@ -610,6 +613,8 @@ export interface GeneratedResult {
   label?: string;
   note?: string;
   finish_reason?: string | null;
+  /** A PARTIAL answer that hit the token cap — real but cut off mid-thought. */
+  truncated?: boolean;
 }
 
 /** One in-progress model download, normalized by the backend from Lemonade's

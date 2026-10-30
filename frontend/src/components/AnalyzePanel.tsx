@@ -20,7 +20,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { api, type AnalyzeResult, type GeneratedResult } from '../api/client';
-import { Badge, Callout, Unknown } from './common';
+import { Badge, Callout, CutOffNote, Unknown } from './common';
 import Markdown from './Markdown';
 
 /**
@@ -281,6 +281,7 @@ function Summary({ fresh, saved, summarizing, saving, onSummarize, onSave }: {
       <div style={{ marginTop: '0.625rem' }}>
         <div className="card" style={{ borderLeft: '3px solid var(--status-warn)' }}>
           <CollapsibleMarkdown text={fresh.text ?? ''} />
+          <CutOffNote when={fresh.truncated} />
           {fresh.label && <p className="stat-sub" style={{ marginTop: '0.5rem' }}>{fresh.label}</p>}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
@@ -358,6 +359,7 @@ function DeepAnalysis({ fresh, saved, running, saving, onRun, onSave }: {
       <div style={{ marginTop: '0.625rem' }}>
         <div className="card" style={{ borderLeft: '3px solid var(--status-warn)' }}>
           <CollapsibleMarkdown text={String(fresh.text ?? '')} />
+          <CutOffNote when={Boolean(fresh.truncated)} />
           {fresh.label && <p className="stat-sub" style={{ marginTop: '0.5rem' }}>{String(fresh.label)}</p>}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>

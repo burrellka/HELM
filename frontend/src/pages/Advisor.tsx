@@ -10,7 +10,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, type AdvisorSettings, type LibraryEntry } from '../api/client';
-import { Callout } from '../components/common';
+import { Callout, CutOffNote } from '../components/common';
 import AnalyzePanel from '../components/AnalyzePanel';
 import Markdown from '../components/Markdown';
 
@@ -60,6 +60,7 @@ interface TurnMeta {
   completion_tokens?: number;
   cached_tokens?: number;
   note?: string;
+  truncated?: boolean;
 }
 interface Turn { role: string; content: string; reasoning?: string; meta?: TurnMeta }
 
@@ -112,6 +113,7 @@ function AdvisorChat({ modelId }: { modelId: string }) {
                 completion_tokens: ev.usage?.completion_tokens,
                 cached_tokens: ev.usage?.prompt_tokens_details?.cached_tokens,
                 note: ev.note,
+                truncated: ev.truncated,
               },
             };
             return copy;
@@ -147,6 +149,7 @@ function AdvisorChat({ modelId }: { modelId: string }) {
               : <>
                   {t.reasoning && <Thinking text={t.reasoning} live={!t.content} />}
                   {t.content ? <Markdown>{t.content}</Markdown> : null}
+                  <CutOffNote when={t.meta?.truncated} />
                   {t.meta && <TurnLine meta={t.meta} />}
                 </>}
           </div>
